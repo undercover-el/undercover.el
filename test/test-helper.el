@@ -9,7 +9,8 @@
 ;; Test suite setup for ERT Runner.
 
 (require 'undercover)
-(require 'example-library)
+
+(undercover "test/example-library.el")
 
 ;;; Code:
 
