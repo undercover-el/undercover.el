@@ -7,6 +7,7 @@
 ;; Created: Sat Sep 27 2014
 ;; Keywords: lisp, tests, coverage, tools
 ;; Version: 0.0.1
+;; Package-Requires: ((shut-up "0.3.2"))
 
 ;;; Commentary:
 
@@ -15,13 +16,14 @@
 (eval-when-compile (require 'cl))
 
 (require 'edebug)
+(require 'shut-up)
 
 ;;; Code:
 
 (defun undercover--edebug-files (files)
   "Use `edebug' package to instrument all macros and functions in FILES."
   (let ((edebug-all-defs t))
-    (dolist (file files) ;; FIXME: need shut-up.el or analogue for edebug
+    (dolist (file files)
       (kill-buffer (eval-buffer (find-file file))))))
 
 (defun undercover--stop-point-before (before-index)
@@ -38,17 +40,22 @@
   "Return number of covers for each stop point ordered by position for NAME."
   (coerce (get name 'edebug-freq-count) 'list))
 
+(defun undercover--shut-up-edebug-message ()
+  "Muffle `edebug' message \"EDEBUG: function\"."
+  (defadvice edebug-make-form-wrapper (around undercover-shut-up activate)
+    (shut-up ad-do-it)))
+
 (defun undercover--set-edebug-handlers ()
-  "Replace `edebug-before' and `edebug-after' functions with `undercover' handlers."
+  "Replace and advice some `edebug' functions with `undercover' handlers."
   (defalias 'edebug-before 'undercover--stop-point-before)
-  (defalias 'edebug-after 'undercover--stop-point-after))
+  (defalias 'edebug-after 'undercover--stop-point-after)
+  (undercover--shut-up-edebug-message))
 
 ;;;###autoload
 (defun undercover (&rest files)
-  "Use `edebug' package to instrument all macros and functions in FILES.
-Replace `edebug-before' and `edebug-after' functions with `undercover' handlers."
-  (undercover--edebug-files files)
-  (undercover--set-edebug-handlers))
+  "FIXME: awesome documentation"
+  (undercover--set-edebug-handlers)
+  (undercover--edebug-files files))
 
 (provide 'undercover)
 ;;; undercover.el ends here

@@ -5,5 +5,7 @@
 
 (files "*.el")
 
+(depends-on "shut-up")
+
 (development
  (depends-on "ert-runner"))
