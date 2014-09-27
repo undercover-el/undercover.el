@@ -6,11 +6,11 @@
 
 ;;; Commentary:
 
-;; The unit test suite of undercover.el
+;; The unit test suite of undercover.el.
 
 ;;; Code:
 
 (ert-deftest first-test ()
-  (should (eq 1 1)))
+  (should (= 1.0 (distance '(0 0) '(1 0)))))
 
 ;;; undercover-test.el ends here
