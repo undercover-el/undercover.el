@@ -10,7 +10,8 @@
 
 (require 'undercover)
 
-(undercover "test/example-library.el")
+(let ((undercover-force-coverage t))
+  (undercover "test/example-library.el"))
 
 ;;; Code:
 

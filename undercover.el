@@ -20,9 +20,14 @@
 
 ;;; Code:
 
+;; Edebug related functions:
+
+(defvar undercover-force-coverage nil
+  "If nil, test coverage check will be done only under continuous integration service.")
+
 (defun undercover--edebug-files (files)
   "Use `edebug' package to instrument all macros and functions in FILES."
-  (let ((edebug-all-defs t))
+  (let ((edebug-all-defs (or undercover-force-coverage (undercover--under-ci-p))))
     (dolist (file files)
       (kill-buffer (eval-buffer (find-file file))))))
 
@@ -50,6 +55,18 @@
   (defalias 'edebug-before 'undercover--stop-point-before)
   (defalias 'edebug-after 'undercover--stop-point-after)
   (undercover--shut-up-edebug-message))
+
+;; Continuous integration related functions:
+
+(defun undercover--under-travic-ci-p ()
+  "Check that `undercover' running under Travis CI service."
+  (getenv "TRAVIS"))
+
+(defun undercover--under-ci-p ()
+  "Check that `undercover' running under continuous integration service."
+  (undercover--under-travic-ci-p))
+
+;;; Main functions:
 
 ;;;###autoload
 (defun undercover (&rest files)
