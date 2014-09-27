@@ -33,7 +33,7 @@
 
 (defun undercover--edebug-files (files)
   "Use `edebug' package to instrument all macros and functions in FILES."
-  (let ((edebug-all-defs (or undercover-force-coverage (undercover--under-ci-p))))
+  (let ((edebug-all-defs (undercover--coverage-enabled-p)))
     (dolist (file files)
       (eval-buffer (find-file file))))
   (setq undercover--files files))
@@ -117,10 +117,15 @@ Values of that hash are number of covers."
 
 ;;; Main functions:
 
+(defun undercover--coverage-enabled-p ()
+  "Check that `undercover' is enabled."
+  (or undercover-force-coverage (undercover--under-ci-p)))
+
 ;;;###autoload
 (defun undercover (&rest files)
   "FIXME: awesome documentation"
-  (undercover--set-edebug-handlers)
+  (when (undercover--coverage-enabled-p)
+    (undercover--set-edebug-handlers))
   (undercover--edebug-files files))
 
 (provide 'undercover)
