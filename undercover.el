@@ -20,16 +20,23 @@
 
 ;;; Code:
 
-;; Edebug related functions:
-
 (defvar undercover-force-coverage nil
   "If nil, test coverage check will be done only under continuous integration service.")
+
+(defvar undercover--files nil
+  "List of files for test coverage check.")
+
+(defvar undercover--files-coverage-statistics (make-hash-table :test 'equal)
+  "Table of coverage statistics for each file in `undercover--files'.")
+
+;; Edebug related functions:
 
 (defun undercover--edebug-files (files)
   "Use `edebug' package to instrument all macros and functions in FILES."
   (let ((edebug-all-defs (or undercover-force-coverage (undercover--under-ci-p))))
     (dolist (file files)
-      (kill-buffer (eval-buffer (find-file file))))))
+      (eval-buffer (find-file file))))
+  (setq undercover--files files))
 
 (defun undercover--stop-point-before (before-index)
   "Increase number of times that stop point at BEFORE-INDEX was covered."
@@ -40,6 +47,10 @@
   "Increase number of times that stop point at AFTER-INDEX was covered."
   (incf (aref edebug-freq-count after-index))
   value)
+
+(defun undercover--stop-points (name)
+  "Return stop points ordered by position for NAME."
+  (coerce (nth 2 (get name 'edebug)) 'list))
 
 (defun undercover--stop-points-covers (name)
   "Return number of covers for each stop point ordered by position for NAME."
@@ -65,6 +76,44 @@
 (defun undercover--under-ci-p ()
   "Check that `undercover' running under continuous integration service."
   (undercover--under-travic-ci-p))
+
+;; Coverage statistics related functions:
+
+(defun undercover--symbol-coverage-statistics (edebug-symbol statistics)
+  "Collect coverage statistics for EDEBUG-SYMBOL into STATISTICS hash."
+  (let* ((start-marker (car (get edebug-symbol 'edebug)))
+         (points (undercover--stop-points edebug-symbol))
+         (points-covers (undercover--stop-points-covers edebug-symbol))
+         (points-and-covers (map 'list #'cons points points-covers)))
+    (dolist (point-and-cover points-and-covers)
+      (let* ((point (car point-and-cover))
+             (line  (line-number-at-pos (+ point start-marker)))
+             (cover (cdr point-and-cover))
+             (previous-score (gethash line statistics)))
+        (setf (gethash line statistics)
+              (if previous-score (min previous-score cover) cover))))))
+
+(defun undercover--file-coverage-statistics ()
+  "Collect coverage statistics for current-file into hash.
+Keys of that hash are line numbers.
+Values of that hash are number of covers."
+  (let ((statistics (make-hash-table)))
+    (dolist (edebug-data edebug-form-data)
+      (let ((edebug-symbol (car edebug-data)))
+        (when (get edebug-symbol 'edebug)
+          (undercover--symbol-coverage-statistics edebug-symbol statistics))))
+    statistics))
+
+(defun undercover--collect-file-coverage (file)
+  "Collect coverage statistics for FILE."
+  (find-file file)
+  (setf (gethash file undercover--files-coverage-statistics)
+        (undercover--file-coverage-statistics)))
+
+(defun undercover--collect-files-coverage (files)
+  "Collect coverage statistics for each file in FILES."
+  (dolist (file files)
+    (undercover--collect-file-coverage file)))
 
 ;;; Main functions:
 

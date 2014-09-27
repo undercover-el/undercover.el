@@ -19,5 +19,12 @@
     (sqrt (+ (expt (- x1 x2) 2)
              (expt (- y1 y2) 2)))))
 
+(defun fib (n)
+  "Return N's Fibonacci number."
+  (cond
+    ((zerop n) 0)
+    ((= n 1) 1)
+    (t (+ (fib (- n 1)) (fib (- n 2))))))
+
 (provide 'example-library)
 ;;; example-library.el ends here
