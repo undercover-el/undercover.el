@@ -32,7 +32,8 @@
 
 (ert-deftest test-5/check-coverage-statistics ()
   (undercover--collect-files-coverage undercover--files)
-  (let ((example-library-statistics (gethash "test/example-library.el" undercover--files-coverage-statistics)))
+  (let ((example-library-statistics (gethash (expand-file-name "example-library.el")
+                                             undercover--files-coverage-statistics)))
 
     ;; distance statistics
     (dolist (line '(15 16 17 18 19 20))

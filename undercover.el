@@ -126,7 +126,7 @@ Values of that hash are number of covers."
   "FIXME: awesome documentation"
   (when (undercover--coverage-enabled-p)
     (undercover--set-edebug-handlers))
-  (undercover--edebug-files files))
+  (undercover--edebug-files (mapcar #'expand-file-name files)))
 
 (provide 'undercover)
 ;;; undercover.el ends here
