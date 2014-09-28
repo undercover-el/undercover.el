@@ -30,7 +30,7 @@
 (defvar undercover--files-coverage-statistics (make-hash-table :test 'equal)
   "Table of coverage statistics for each file in `undercover--files'.")
 
-;; Edebug related functions:
+;; edebug related functions:
 
 (defun undercover--edebug-files (files)
   "Use `edebug' package to instrument all macros and functions in FILES."
@@ -135,7 +135,7 @@ Values of that hash are number of covers."
   "Automatic report-type determination."
   (and (undercover--under-ci-p) 'coveralls))
 
-;; Coveralls report:
+;; coveralls.io report:
 
 (defun undercover--update-coveralls-report-for-travis-ci (report)
   "Update test coverage REPORT for coveralls.io with Travis CI service information."
@@ -174,15 +174,27 @@ Values of that hash are number of covers."
   (let ((report (make-hash-table)))
     (cond
      ((undercover--under-travic-ci-p) (undercover--update-coveralls-report-for-travis-ci report))
-     (t (error "Unsupported coveralls report")))
+     (t (message "Unsupported coveralls report")))
     (undercover--fill-coveralls-report report)
     (json-encode report)))
 
-(defun undercover--send-coveralls-report (value) value)
+(defun undercover--send-coveralls-report (value) (print value))
 
 (defun undercover--coveralls-report ()
   "Create and submit test coverage report to coveralls.io."
   (undercover--send-coveralls-report (undercover--create-coveralls-report)))
+
+;; ert-runner related functions:
+
+(defun undercover--report-on-kill ()
+  "Trigger `undercover-report' before exit."
+  (ignore-errors
+    (undercover-report)))
+
+(defun undercover--set-ert-runner-handlers ()
+  "Add `undercover-report' to `kill-emacs-hook'."
+  (when (getenv "ERT_RUNNER_ARGS")
+    (add-hook 'kill-emacs-hook 'undercover--report-on-kill)))
 
 ;;; Main functions:
 
@@ -196,13 +208,14 @@ Posible values of REPORT-TYPE: coveralls."
   (undercover--collect-files-coverage undercover--files)
   (case (or report-type (undercover--determine-report-type))
     (coveralls (undercover--coveralls-report))
-    (t (error "Unsupported report-type"))))
+    (t (message "Unsupported report-type"))))
 
 ;;;###autoload
 (defun undercover (&rest files)
   "FIXME: awesome documentation"
   (when (undercover--coverage-enabled-p)
-    (undercover--set-edebug-handlers))
+    (undercover--set-edebug-handlers)
+    (undercover--set-ert-runner-handlers))
   (undercover--edebug-files (mapcar #'file-truename files)))
 
 (provide 'undercover)
