@@ -143,8 +143,12 @@ Values of that hash are number of covers."
   (save-excursion
     (find-file file)
     (let ((report (make-hash-table)))
-      (setf (gethash "name" report) file
-            (gethash "source" report) (buffer-string)
+      (setf (gethash "name" report)
+            (file-relative-name file (locate-dominating-file default-directory ".git"))
+
+            (gethash "source" report)
+            (buffer-substring-no-properties (point-min) (point-max))
+
             (gethash "coverage" report)
             (undercover--coveralls-file-coverage-report (gethash file undercover--files-coverage-statistics)))
       report)))
