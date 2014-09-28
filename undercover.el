@@ -178,7 +178,14 @@ Values of that hash are number of covers."
     (undercover--fill-coveralls-report report)
     (json-encode report)))
 
-(defun undercover--send-coveralls-report (value) (print value))
+(defun undercover--send-coveralls-report (json-report)
+  (save-excursion
+    (let ((json-file "/tmp/json_file")
+          (coveralls-url "https://coveralls.io/api/v1/jobs"))
+      (find-file json-file)
+      (insert json-report)
+      (save-buffer)
+      (shell-command (format "curl -v -include --form json_file=@%s %s" json-file coveralls-url)))))
 
 (defun undercover--coveralls-report ()
   "Create and submit test coverage report to coveralls.io."
