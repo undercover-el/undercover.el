@@ -36,7 +36,8 @@
   "Use `edebug' package to instrument all macros and functions in FILES."
   (let ((edebug-all-defs (undercover--coverage-enabled-p)))
     (dolist (file files)
-      (eval-buffer (find-file file))))
+      (save-excursion
+        (eval-buffer (find-file file)))))
   (setq undercover--files files))
 
 (defun undercover--stop-point-before (before-index)
@@ -97,9 +98,10 @@ Values of that hash are number of covers."
 
 (defun undercover--collect-file-coverage (file)
   "Collect coverage statistics for FILE."
-  (find-file file)
-  (setf (gethash file undercover--files-coverage-statistics)
-        (undercover--file-coverage-statistics)))
+  (save-excursion
+    (find-file file)
+    (setf (gethash file undercover--files-coverage-statistics)
+          (undercover--file-coverage-statistics))))
 
 (defun undercover--collect-files-coverage (files)
   "Collect coverage statistics for each file in FILES."
@@ -138,13 +140,14 @@ Values of that hash are number of covers."
 
 (defun undercover--coveralls-file-report (file)
   "Create part of coveralls.io report for FILE."
-  (find-file file)
-  (let ((report (make-hash-table)))
-    (setf (gethash "name" report) file
-          (gethash "source" report) (buffer-string)
-          (gethash "coverage" report)
-          (undercover--coveralls-file-coverage-report (gethash file undercover--files-coverage-statistics)))
-    report))
+  (save-excursion
+    (find-file file)
+    (let ((report (make-hash-table)))
+      (setf (gethash "name" report) file
+            (gethash "source" report) (buffer-string)
+            (gethash "coverage" report)
+            (undercover--coveralls-file-coverage-report (gethash file undercover--files-coverage-statistics)))
+      report)))
 
 (defun undercover--fill-coveralls-report (report)
   "Fill test coverage REPORT for coveralls.io."
@@ -185,7 +188,7 @@ Posible values of REPORT-TYPE: coveralls."
   "FIXME: awesome documentation"
   (when (undercover--coverage-enabled-p)
     (undercover--set-edebug-handlers))
-  (undercover--edebug-files (mapcar #'expand-file-name files)))
+  (undercover--edebug-files (mapcar #'file-truename files)))
 
 (provide 'undercover)
 ;;; undercover.el ends here
