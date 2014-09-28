@@ -16,6 +16,7 @@
 (eval-when-compile (require 'cl))
 
 (require 'edebug)
+(require 'json)
 (require 'shut-up)
 
 ;;; Code:
@@ -67,16 +68,6 @@
   (defalias 'edebug-after 'undercover--stop-point-after)
   (undercover--shut-up-edebug-message))
 
-;; Continuous integration related functions:
-
-(defun undercover--under-travic-ci-p ()
-  "Check that `undercover' running under Travis CI service."
-  (getenv "TRAVIS"))
-
-(defun undercover--under-ci-p ()
-  "Check that `undercover' running under continuous integration service."
-  (undercover--under-travic-ci-p))
-
 ;; Coverage statistics related functions:
 
 (defun undercover--symbol-coverage-statistics (edebug-symbol statistics)
@@ -115,11 +106,79 @@ Values of that hash are number of covers."
   (dolist (file files)
     (undercover--collect-file-coverage file)))
 
+;; Continuous integration related functions:
+
+(defun undercover--under-travic-ci-p ()
+  "Check that `undercover' running under Travis CI service."
+  (getenv "TRAVIS"))
+
+(defun undercover--under-ci-p ()
+  "Check that `undercover' running under continuous integration service."
+  (undercover--under-travic-ci-p))
+
+;;; Reports related functions:
+
+(defun undercover--determine-report-type ()
+  "Automatic report-type determination."
+  (and (undercover--under-ci-p) 'coveralls))
+
+;; Coveralls report:
+
+(defun undercover--update-coveralls-report-for-travis-ci (report)
+  "Update test coverage REPORT for coveralls.io with Travis CI service information."
+  (setf (gethash "service_name" report) "travis-ci"
+        (gethash "service_job_id" report) (getenv "TRAVIS_JOB_ID")))
+
+(defun undercover--coveralls-file-coverage-report (statistics)
+  "Translate file coverage STATISTICS into coveralls.io format."
+  (let (file-coverage)
+    (dotimes (line (count-lines (point-min) (point-max)))
+      (push (gethash (1+ line) statistics) file-coverage))
+    (reverse file-coverage)))
+
+(defun undercover--coveralls-file-report (file)
+  "Create part of coveralls.io report for FILE."
+  (find-file file)
+  (let ((report (make-hash-table)))
+    (setf (gethash "name" report) file
+          (gethash "source" report) (buffer-string)
+          (gethash "coverage" report)
+          (undercover--coveralls-file-coverage-report (gethash file undercover--files-coverage-statistics)))
+    report))
+
+(defun undercover--fill-coveralls-report (report)
+  "Fill test coverage REPORT for coveralls.io."
+  (setf (gethash "source_files" report)
+        (mapcar #'undercover--coveralls-file-report undercover--files)))
+
+(defun undercover--create-coveralls-report ()
+  "Create test coverage report for coveralls.io."
+  (let ((report (make-hash-table)))
+    (cond
+     ((undercover--under-travic-ci-p) (undercover--update-coveralls-report-for-travis-ci report))
+     (t (error "Unsupported coveralls report")))
+    (undercover--fill-coveralls-report report)
+    (json-encode report)))
+
+(defun undercover--send-coveralls-report (value) value)
+
+(defun undercover--coveralls-report ()
+  "Create and submit test coverage report to coveralls.io."
+  (undercover--send-coveralls-report (undercover--create-coveralls-report)))
+
 ;;; Main functions:
 
 (defun undercover--coverage-enabled-p ()
   "Check that `undercover' is enabled."
   (or undercover-force-coverage (undercover--under-ci-p)))
+
+(defun undercover-report (&optional report-type)
+  "Create and submit (if needed) test coverage report based on REPORT-TYPE.
+Posible values of REPORT-TYPE: coveralls."
+  (undercover--collect-files-coverage undercover--files)
+  (case (or report-type (undercover--determine-report-type))
+    (coveralls (undercover--coveralls-report))
+    (t (error "Unsupported report-type"))))
 
 ;;;###autoload
 (defun undercover (&rest files)
