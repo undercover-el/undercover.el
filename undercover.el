@@ -40,15 +40,17 @@
         (eval-buffer (find-file file)))))
   (setq undercover--files files))
 
-(defun undercover--stop-point-before (before-index)
-  "Increase number of times that stop point at BEFORE-INDEX was covered."
-  (incf (aref edebug-freq-count before-index))
-  before-index)
+(setf (symbol-function 'undercover--stop-point-before)
+      (lambda (before-index)
+        "Increase number of times that stop point at BEFORE-INDEX was covered."
+        (incf (aref edebug-freq-count before-index))
+        before-index))
 
-(defun undercover--stop-point-after (_before-index after-index value)
-  "Increase number of times that stop point at AFTER-INDEX was covered."
-  (incf (aref edebug-freq-count after-index))
-  value)
+(setf (symbol-function 'undercover--stop-point-after)
+      (lambda (_before-index after-index value)
+        "Increase number of times that stop point at AFTER-INDEX was covered."
+        (incf (aref edebug-freq-count after-index))
+        value))
 
 (defun undercover--stop-points (name)
   "Return stop points ordered by position for NAME."
