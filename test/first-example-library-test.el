@@ -1,4 +1,4 @@
-;;; test-helper.el --- undercover.el: Unit-test suite -*- lexical-binding: t; -*-
+;;; first-example-library-test.el --- undercover.el: Unit-test suite -*- lexical-binding: t; -*-
 
 ;; Copyright (c) 2014 Sviridov Alexander
 
@@ -9,6 +9,12 @@
 ;; The unit test suite of undercover.el.
 
 ;;; Code:
+
+(defconst first-example-library-filename
+  "test/first-example-library/first-example-library.el")
+
+(let ((undercover-force-coverage t))
+  (undercover first-example-library-filename))
 
 (ert-deftest test-1/edebug-handlers-are-setted ()
   (should (eq 'undercover--stop-point-before (symbol-function 'edebug-before)))
@@ -32,7 +38,7 @@
 
 (ert-deftest test-5/check-coverage-statistics ()
   (undercover--collect-files-coverage undercover--files)
-  (let ((example-library-statistics (gethash (file-truename "test/example-library.el")
+  (let ((example-library-statistics (gethash (file-truename first-example-library-filename)
                                              undercover--files-coverage-statistics)))
     ;; distance statistics
     (dolist (line '(15 16 17 18 19 20))
@@ -47,4 +53,4 @@
     (should (= 21 (gethash 26 example-library-statistics)))
     (should (= 12 (gethash 27 example-library-statistics)))))
 
-;;; undercover-test.el ends here
+;;; first-example-library-test.el ends here

@@ -10,9 +10,6 @@
 
 (require 'undercover)
 
-(let ((undercover-force-coverage t))
-  (undercover "test/example-library.el"))
-
 ;;; Code:
 
 (message "Running tests on Emacs %s" emacs-version)

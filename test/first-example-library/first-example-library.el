@@ -1,4 +1,4 @@
-;;; exanple-library.el --- undercover.el: Library for test coverage tests -*- lexical-binding: t; -*-
+;;; first-exanple-library.el --- undercover.el: Library for test coverage tests -*- lexical-binding: t; -*-
 
 ;; Copyright (c) 2014 Sviridov Alexander
 
@@ -26,5 +26,5 @@
     ((= n 1) 1)
     (t (+ (fib (- n 1)) (fib (- n 2))))))
 
-(provide 'example-library)
-;;; example-library.el ends here
+(provide 'first-example-library)
+;;; first-example-library.el ends here
