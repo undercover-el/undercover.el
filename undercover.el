@@ -47,10 +47,19 @@
         before-index))
 
 (setf (symbol-function 'undercover--stop-point-after)
-      (lambda (_before-index after-index value)
+      (lambda (before-index after-index value)
         "Increase number of times that stop point at AFTER-INDEX was covered."
         (incf (aref edebug-freq-count after-index))
+        (undercover--align-counts-between-stop-points before-index after-index)
         value))
+
+(setf (symbol-function 'undercover--align-counts-between-stop-points)
+      (lambda (before-index after-index)
+        (do ((index (1+ before-index) (1+ index)))
+            ((>= index after-index))
+          (setf (aref edebug-freq-count index)
+                (min (aref edebug-freq-count index)
+                     (aref edebug-freq-count before-index))))))
 
 (defun undercover--stop-points (name)
   "Return stop points ordered by position for NAME."
