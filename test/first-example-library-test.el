@@ -16,6 +16,13 @@
 (let ((undercover-force-coverage t))
   (undercover first-example-library-filename))
 
+(defmacro with-env-variable (name value &rest body)
+  "Set environment variable NAME to VALUE and evaluate BODY."
+ `(let ((---old-env-var--- (getenv ,name)))
+    (setenv ,name ,value)
+    (unwind-protect (progn ,@body)
+      (setenv ,name ---old-env-var---))))
+
 (ert-deftest test-1/edebug-handlers-are-setted ()
   (should (eq 'undercover--stop-point-before (symbol-function 'edebug-before)))
   (should (eq 'undercover--stop-point-after (symbol-function 'edebug-after))))
@@ -52,5 +59,9 @@
     (should (= 27 (gethash 25 example-library-statistics)))
     (should (= 21 (gethash 26 example-library-statistics)))
     (should (= 12 (gethash 27 example-library-statistics)))))
+
+(ert-deftest test-6/check-environment-variables ()
+  (with-env-variable "TRAVIS" "true"
+    (should (eq 'coveralls (undercover--determine-report-type)))))
 
 ;;; first-example-library-test.el ends here
