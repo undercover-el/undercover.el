@@ -135,12 +135,57 @@ Values of that hash are number of covers."
   "Automatic report-type determination."
   (and (undercover--under-ci-p) 'coveralls))
 
+(defun undercover--get-git-info (&rest args)
+  "Execute Git with ARGS, returning the first line of its output."
+  (with-temp-buffer
+    (apply #'process-file "git" nil t nil "--no-pager" args)
+    (goto-char (point-min))
+    (buffer-substring-no-properties
+     (line-beginning-position)
+     (line-end-position))))
+
+(defun undercover--get-git-info-from-log (format)
+  "Execute Git log, returning the info about last commit in FORMAT." ;; FIXME
+  (undercover--get-git-info "log" "-1" (format "--pretty=format:%%%s" format)))
+
+(defun undercover--get-git-remotes ()
+  "Return list of git remotes."
+  (with-temp-buffer
+    (process-file "git" nil t nil "--no-pager" "remote")
+    (let ((remotes (split-string (buffer-string) "\n" t))
+          (config-path-format (format "remote.%%s.url"))
+          (remotes-info nil))
+      (dolist (remote remotes remotes-info)
+        (let ((remote-url (undercover--get-git-info "config" (format config-path-format remote)))
+              (remote-table (make-hash-table)))
+          (puthash "name" remote remote-table)
+          (puthash "url" remote-url remote-table)
+          (push remote-table remotes-info))))))
+
 ;; coveralls.io report:
 
-(defun undercover--update-coveralls-report-for-travis-ci (report)
+(defun undercover--update-coveralls-report-with-travis-ci (report)
   "Update test coverage REPORT for coveralls.io with Travis CI service information."
   (puthash "service_name" "travis-ci" report)
   (puthash "service_job_id" (getenv "TRAVIS_JOB_ID") report))
+
+(defun undercover--update-coveralls-report-for-git (report)
+  "Update test coverage REPORT for coveralls.io with Git information."
+  (let ((git-report (make-hash-table))
+        (head-report (make-hash-table)))
+
+    (puthash "id" (undercover--get-git-info-from-log "H") head-report)
+    (puthash "author_name" (undercover--get-git-info-from-log "aN") head-report)
+    (puthash "author_email" (undercover--get-git-info-from-log "ae") head-report)
+    (puthash "committer_name" (undercover--get-git-info-from-log "cN") head-report)
+    (puthash "committer_email" (undercover--get-git-info-from-log "ce") head-report)
+    (puthash "message" (undercover--get-git-info-from-log "s") head-report)
+
+    (puthash "head" head-report git-report)
+    (puthash "branch" (undercover--get-git-info "rev-parse" "--abbrev-ref" "HEAD") git-report)
+    (puthash "remotes" (undercover--get-git-remotes) git-report)
+
+    (puthash "git" git-report report)))
 
 (defun undercover--coveralls-file-coverage-report (statistics)
   "Translate file coverage STATISTICS into coveralls.io format."
@@ -172,8 +217,9 @@ Values of that hash are number of covers."
   "Create test coverage report for coveralls.io."
   (let ((report (make-hash-table)))
     (cond
-     ((undercover--under-travic-ci-p) (undercover--update-coveralls-report-for-travis-ci report))
+     ((undercover--under-travic-ci-p) (undercover--update-coveralls-report-with-travis-ci report))
      (t (message "Unsupported coveralls report")))
+    (undercover--update-coveralls-report-for-git report)
     (undercover--fill-coveralls-report report)
     (json-encode report)))
 
