@@ -8,4 +8,5 @@
 (depends-on "shut-up")
 
 (development
- (depends-on "ert-runner"))
+  (depends-on "el-mock")
+  (depends-on "ert-runner"))

@@ -23,6 +23,8 @@
     (unwind-protect (progn ,@body)
       (setenv ,name ---old-env-var---))))
 
+(defun assoc-cdr (key alist) (cdr (assoc key alist)))
+
 (ert-deftest test-1/edebug-handlers-are-setted ()
   (should (eq 'undercover--stop-point-before (symbol-function 'edebug-before)))
   (should (eq 'undercover--stop-point-after (symbol-function 'edebug-after))))
@@ -63,5 +65,37 @@
 (ert-deftest test-6/check-environment-variables ()
   (with-env-variable "TRAVIS" "true"
     (should (eq 'coveralls (undercover--determine-report-type)))))
+
+(ert-deftest test-7/check-coveralls-report ()
+  (with-env-variable "TRAVIS" "true"
+    (with-mock
+      (stub shell-command)
+      (undercover-report)))
+
+  (let ((report (json-read-file "/tmp/json_file")))
+    (should (string-equal "travis-ci" (assoc-cdr 'service_name report)))
+    (let ((file-report (aref (assoc-cdr 'source_files report) 0)))
+      (should (string-equal "test/first-example-library/first-example-library.el"
+                            (assoc-cdr 'name file-report)))
+
+      (should (string-equal (save-excursion
+                              (find-file (file-truename "test/first-example-library/first-example-library.el"))
+                              (buffer-substring-no-properties (point-min) (point-max)))
+
+                            (assoc-cdr 'source file-report)))
+
+      (let ((example-library-statistics (assoc-cdr 'coverage file-report)))
+        ;; distance statistics
+        (dolist (line '(14 15 16 17 18 19))
+          (should (= 2 (aref example-library-statistics line))))
+
+        (should-not (aref example-library-statistics 13))
+        (should-not (aref example-library-statistics 20))
+
+        ;; fib statistics
+        (should (= 27 (aref example-library-statistics 23)))
+        (should (= 27 (aref example-library-statistics 24)))
+        (should (= 21 (aref example-library-statistics 25)))
+        (should (= 12 (aref example-library-statistics 26)))))))
 
 ;;; first-example-library-test.el ends here

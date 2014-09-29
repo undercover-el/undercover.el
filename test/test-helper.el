@@ -8,6 +8,7 @@
 
 ;; Test suite setup for ERT Runner.
 
+(require 'el-mock)
 (require 'undercover)
 
 ;;; Code:
