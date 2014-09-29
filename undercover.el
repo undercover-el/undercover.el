@@ -92,9 +92,9 @@
       (let* ((point (car point-and-cover))
              (line  (line-number-at-pos (+ point start-marker)))
              (cover (cdr point-and-cover))
-             (previous-score (gethash line statistics)))
-        (setf (gethash line statistics)
-              (if previous-score (min previous-score cover) cover))))))
+             (previous-score (gethash line statistics cover))
+             (new-score (min previous-score cover)))
+        (puthash line new-score statistics)))))
 
 (defun undercover--file-coverage-statistics ()
   "Collect coverage statistics for current-file into hash.
@@ -111,8 +111,8 @@ Values of that hash are number of covers."
   "Collect coverage statistics for FILE."
   (save-excursion
     (find-file file)
-    (setf (gethash file undercover--files-coverage-statistics)
-          (undercover--file-coverage-statistics))))
+    (let ((statistics (undercover--file-coverage-statistics)))
+      (puthash file statistics undercover--files-coverage-statistics))))
 
 (defun undercover--collect-files-coverage (files)
   "Collect coverage statistics for each file in FILES."
@@ -139,8 +139,8 @@ Values of that hash are number of covers."
 
 (defun undercover--update-coveralls-report-for-travis-ci (report)
   "Update test coverage REPORT for coveralls.io with Travis CI service information."
-  (setf (gethash "service_name" report) "travis-ci"
-        (gethash "service_job_id" report) (getenv "TRAVIS_JOB_ID")))
+  (puthash "service_name" "travis-ci" report)
+  (puthash "service_job_id" (getenv "TRAVIS_JOB_ID") report))
 
 (defun undercover--coveralls-file-coverage-report (statistics)
   "Translate file coverage STATISTICS into coveralls.io format."
@@ -153,21 +153,20 @@ Values of that hash are number of covers."
   "Create part of coveralls.io report for FILE."
   (save-excursion
     (find-file file)
-    (let ((report (make-hash-table)))
-      (setf (gethash "name" report)
-            (file-relative-name file (locate-dominating-file default-directory ".git"))
-
-            (gethash "source" report)
-            (buffer-substring-no-properties (point-min) (point-max))
-
-            (gethash "coverage" report)
-            (undercover--coveralls-file-coverage-report (gethash file undercover--files-coverage-statistics)))
+    (let ((report (make-hash-table))
+          (file-name (file-relative-name file (locate-dominating-file default-directory ".git")))
+          (file-content (buffer-substring-no-properties (point-min) (point-max)))
+          (coverage-report (undercover--coveralls-file-coverage-report
+                            (gethash file undercover--files-coverage-statistics))))
+      (puthash "name" file-name report)
+      (puthash "source" file-content report)
+      (puthash "coverage" coverage-report report)
       report)))
 
 (defun undercover--fill-coveralls-report (report)
   "Fill test coverage REPORT for coveralls.io."
-  (setf (gethash "source_files" report)
-        (mapcar #'undercover--coveralls-file-report undercover--files)))
+  (let ((file-reports (mapcar #'undercover--coveralls-file-report undercover--files)))
+    (puthash "source_files" file-reports report)))
 
 (defun undercover--create-coveralls-report ()
   "Create test coverage report for coveralls.io."
