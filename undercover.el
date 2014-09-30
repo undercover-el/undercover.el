@@ -228,7 +228,7 @@ Values of that hash are number of covers."
   (let ((report (make-hash-table)))
     (cond
      ((undercover--under-travic-ci-p) (undercover--update-coveralls-report-with-travis-ci report))
-     (t (message "Unsupported coveralls report")))
+     (t (error "Unsupported coveralls.io report")))
     (undercover--update-coveralls-report-with-git report)
     (undercover--fill-coveralls-report report)
     (json-encode report)))
@@ -273,7 +273,7 @@ Values of that hash are number of covers."
 Posible values of REPORT-TYPE: coveralls."
   (case (or report-type (undercover--determine-report-type))
     (coveralls (undercover--coveralls-report))
-    (t (message "Unsupported report-type"))))
+    (t (error "Unsupported report-type"))))
 
 ;;;###autoload
 (defun undercover (&rest files)

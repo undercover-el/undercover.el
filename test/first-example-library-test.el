@@ -101,4 +101,9 @@
         (should (= 21 (aref example-library-statistics 25)))
         (should (= 12 (aref example-library-statistics 26)))))))
 
+(ert-deftest test-8/should-error ()
+  (with-env-variable "TRAVIS" nil
+    (should-error (undercover-report))
+    (should-error (undercover--create-coveralls-report))))
+
 ;;; first-example-library-test.el ends here
