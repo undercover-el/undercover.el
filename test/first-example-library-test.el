@@ -13,15 +13,16 @@
 (defconst first-example-library-filename
   "test/first-example-library/first-example-library.el")
 
-(let ((undercover-force-coverage t))
-  (undercover first-example-library-filename))
-
 (defmacro with-env-variable (name value &rest body)
   "Set environment variable NAME to VALUE and evaluate BODY."
  `(let ((---old-env-var--- (getenv ,name)))
     (setenv ,name ,value)
     (unwind-protect (progn ,@body)
       (setenv ,name ---old-env-var---))))
+
+(with-env-variable "TRAVIS" "true"
+  (let ((undercover-force-coverage nil))
+    (undercover first-example-library-filename)))
 
 (defun assoc-cdr (key alist) (cdr (assoc key alist)))
 
@@ -70,7 +71,9 @@
   (with-env-variable "TRAVIS" "true"
     (with-mock
       (stub shell-command)
-      (undercover-report)))
+      (ad-deactivate 'undercover--report-on-kill)
+      (undercover--report-on-kill)
+      (ad-activate 'undercover--report-on-kill)))
 
   (let ((report (json-read-file "/tmp/json_file")))
     (should (string-equal "travis-ci" (assoc-cdr 'service_name report)))
