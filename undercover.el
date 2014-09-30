@@ -47,8 +47,8 @@
 (defun undercover--edebug-files (files)
   "Use `edebug' package to instrument all macros and functions in FILES."
   (let ((edebug-all-defs (undercover--coverage-enabled-p)))
-    (dolist (file files)
-      (save-excursion
+    (save-excursion
+      (dolist (file files)
         (eval-buffer (find-file file)))))
   (setq undercover--files files))
 
@@ -67,6 +67,7 @@
 
 (setf (symbol-function 'undercover--align-counts-between-stop-points)
       (lambda (before-index after-index)
+        "Decrease number of times that stop points between BEFORE-INDEX and AFTER-INDEX are covered."
         (do ((index (1+ before-index) (1+ index)))
             ((>= index after-index))
           (setf (aref edebug-freq-count index)
@@ -157,11 +158,11 @@ Values of that hash are number of covers."
      (line-end-position))))
 
 (defun undercover--get-git-info-from-log (format)
-  "Execute Git log, returning the info about last commit in FORMAT." ;; FIXME
+  "Get first line of Git log in given FORMAT."
   (undercover--get-git-info "log" "-1" (format "--pretty=format:%%%s" format)))
 
 (defun undercover--get-git-remotes ()
-  "Return list of git remotes."
+  "Return list of Git remotes."
   (with-temp-buffer
     (process-file "git" nil t nil "--no-pager" "remote")
     (let ((remotes (split-string (buffer-string) "\n" t))
@@ -182,7 +183,7 @@ Values of that hash are number of covers."
     "service_name"   "travis-ci"
     "service_job_id" (getenv "TRAVIS_JOB_ID")))
 
-(defun undercover--update-coveralls-report-for-git (report)
+(defun undercover--update-coveralls-report-with-git (report)
   "Update test coverage REPORT for coveralls.io with Git information."
   (undercover--fill-hash-table report
     "git" (undercover--make-hash-table
@@ -201,14 +202,13 @@ Values of that hash are number of covers."
   (let (file-coverage)
     (dotimes (line (count-lines (point-min) (point-max)))
       (push (gethash (1+ line) statistics) file-coverage))
-    (reverse file-coverage)))
+    (nreverse file-coverage)))
 
 (defun undercover--coveralls-file-report (file)
   "Create part of coveralls.io report for FILE."
   (save-excursion
     (find-file file)
-    (let ((report (make-hash-table))
-          (file-name (file-relative-name file (locate-dominating-file default-directory ".git")))
+    (let ((file-name (file-relative-name file (locate-dominating-file default-directory ".git")))
           (file-content (buffer-substring-no-properties (point-min) (point-max)))
           (coverage-report (undercover--coveralls-file-coverage-report
                             (gethash file undercover--files-coverage-statistics))))
@@ -224,15 +224,17 @@ Values of that hash are number of covers."
 
 (defun undercover--create-coveralls-report ()
   "Create test coverage report for coveralls.io."
+  (undercover--collect-files-coverage undercover--files)
   (let ((report (make-hash-table)))
     (cond
      ((undercover--under-travic-ci-p) (undercover--update-coveralls-report-with-travis-ci report))
      (t (message "Unsupported coveralls report")))
-    (undercover--update-coveralls-report-for-git report)
+    (undercover--update-coveralls-report-with-git report)
     (undercover--fill-coveralls-report report)
     (json-encode report)))
 
 (defun undercover--send-coveralls-report (json-report)
+  "Send JSON-REPORT to coveralls.io."
   (save-excursion
     (let ((json-file "/tmp/json_file")
           (coveralls-url "https://coveralls.io/api/v1/jobs"))
@@ -249,7 +251,7 @@ Values of that hash are number of covers."
   "Create and submit test coverage report to coveralls.io."
   (undercover--send-coveralls-report (undercover--create-coveralls-report)))
 
-;; ert-runner related functions:
+;; `ert-runner' related functions:
 
 (defun undercover--report-on-kill ()
   "Trigger `undercover-report' before exit."
@@ -258,8 +260,7 @@ Values of that hash are number of covers."
 
 (defun undercover--set-ert-runner-handlers ()
   "Add `undercover-report' to `kill-emacs-hook'."
-  (when (getenv "ERT_RUNNER_ARGS")
-    (add-hook 'kill-emacs-hook 'undercover--report-on-kill)))
+  (add-hook 'kill-emacs-hook 'undercover--report-on-kill))
 
 ;;; Main functions:
 
@@ -270,17 +271,19 @@ Values of that hash are number of covers."
 (defun undercover-report (&optional report-type)
   "Create and submit (if needed) test coverage report based on REPORT-TYPE.
 Posible values of REPORT-TYPE: coveralls."
-  (undercover--collect-files-coverage undercover--files)
   (case (or report-type (undercover--determine-report-type))
     (coveralls (undercover--coveralls-report))
     (t (message "Unsupported report-type"))))
 
 ;;;###autoload
 (defun undercover (&rest files)
-  "FIXME: awesome documentation"
+  "Enable test coverage for FILES.
+If running under `ert-runner' and Travic CI automatically generate report
+on `kill-emacs' and send it to coveralls.io."
   (when (undercover--coverage-enabled-p)
     (undercover--set-edebug-handlers)
-    (undercover--set-ert-runner-handlers))
+    (when (getenv "ERT_RUNNER_ARGS")
+      (undercover--set-ert-runner-handlers)))
   (undercover--edebug-files (mapcar #'file-truename files)))
 
 (provide 'undercover)
