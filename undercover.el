@@ -30,7 +30,19 @@
 (defvar undercover--files-coverage-statistics (make-hash-table :test 'equal)
   "Table of coverage statistics for each file in `undercover--files'.")
 
-;; edebug related functions:
+;; Utilities
+
+(defun undercover--fill-hash-table (hash-table &rest keys-and-values)
+  "Fill HASH-TABLE from KEYS-AND-VALUES."
+  (loop for (key value) on keys-and-values by #'cddr
+        do (puthash key value hash-table))
+  hash-table)
+
+(defun undercover--make-hash-table (&rest keys-and-values)
+  "Create new hash-table and fill it from KEYS-AND-VALUES."
+  (apply #'undercover--fill-hash-table (make-hash-table) keys-and-values))
+
+;; `edebug' related functions:
 
 (defun undercover--edebug-files (files)
   "Use `edebug' package to instrument all macros and functions in FILES."
@@ -111,8 +123,8 @@ Values of that hash are number of covers."
   "Collect coverage statistics for FILE."
   (save-excursion
     (find-file file)
-    (let ((statistics (undercover--file-coverage-statistics)))
-      (puthash file statistics undercover--files-coverage-statistics))))
+    (undercover--fill-hash-table undercover--files-coverage-statistics
+      file (undercover--file-coverage-statistics))))
 
 (defun undercover--collect-files-coverage (files)
   "Collect coverage statistics for each file in FILES."
@@ -156,36 +168,33 @@ Values of that hash are number of covers."
           (config-path-format (format "remote.%%s.url"))
           (remotes-info nil))
       (dolist (remote remotes remotes-info)
-        (let ((remote-url (undercover--get-git-info "config" (format config-path-format remote)))
-              (remote-table (make-hash-table)))
-          (puthash "name" remote remote-table)
-          (puthash "url" remote-url remote-table)
+        (let* ((remote-url (undercover--get-git-info "config" (format config-path-format remote)))
+               (remote-table (undercover--make-hash-table
+                              "name" remote
+                              "url"  remote-url)))
           (push remote-table remotes-info))))))
 
 ;; coveralls.io report:
 
 (defun undercover--update-coveralls-report-with-travis-ci (report)
   "Update test coverage REPORT for coveralls.io with Travis CI service information."
-  (puthash "service_name" "travis-ci" report)
-  (puthash "service_job_id" (getenv "TRAVIS_JOB_ID") report))
+  (undercover--fill-hash-table report
+    "service_name"   "travis-ci"
+    "service_job_id" (getenv "TRAVIS_JOB_ID")))
 
 (defun undercover--update-coveralls-report-for-git (report)
   "Update test coverage REPORT for coveralls.io with Git information."
-  (let ((git-report (make-hash-table))
-        (head-report (make-hash-table)))
-
-    (puthash "id" (undercover--get-git-info-from-log "H") head-report)
-    (puthash "author_name" (undercover--get-git-info-from-log "aN") head-report)
-    (puthash "author_email" (undercover--get-git-info-from-log "ae") head-report)
-    (puthash "committer_name" (undercover--get-git-info-from-log "cN") head-report)
-    (puthash "committer_email" (undercover--get-git-info-from-log "ce") head-report)
-    (puthash "message" (undercover--get-git-info-from-log "s") head-report)
-
-    (puthash "head" head-report git-report)
-    (puthash "branch" (undercover--get-git-info "rev-parse" "--abbrev-ref" "HEAD") git-report)
-    (puthash "remotes" (undercover--get-git-remotes) git-report)
-
-    (puthash "git" git-report report)))
+  (undercover--fill-hash-table report
+    "git" (undercover--make-hash-table
+           "branch"  (undercover--get-git-info "rev-parse" "--abbrev-ref" "HEAD")
+           "remotes" (undercover--get-git-remotes)
+           "head"    (undercover--make-hash-table
+                      "id"              (undercover--get-git-info-from-log "H")
+                      "author_name"     (undercover--get-git-info-from-log "aN")
+                      "author_email"    (undercover--get-git-info-from-log "ae")
+                      "committer_name"  (undercover--get-git-info-from-log "cN")
+                      "committer_email" (undercover--get-git-info-from-log "ce")
+                      "message"         (undercover--get-git-info-from-log "s")))))
 
 (defun undercover--coveralls-file-coverage-report (statistics)
   "Translate file coverage STATISTICS into coveralls.io format."
@@ -203,15 +212,15 @@ Values of that hash are number of covers."
           (file-content (buffer-substring-no-properties (point-min) (point-max)))
           (coverage-report (undercover--coveralls-file-coverage-report
                             (gethash file undercover--files-coverage-statistics))))
-      (puthash "name" file-name report)
-      (puthash "source" file-content report)
-      (puthash "coverage" coverage-report report)
-      report)))
+      (undercover--make-hash-table
+       "name"     file-name
+       "source"   file-content
+       "coverage" coverage-report))))
 
 (defun undercover--fill-coveralls-report (report)
   "Fill test coverage REPORT for coveralls.io."
-  (let ((file-reports (mapcar #'undercover--coveralls-file-report undercover--files)))
-    (puthash "source_files" file-reports report)))
+  (undercover--fill-hash-table report
+    "source_files" (mapcar #'undercover--coveralls-file-report undercover--files)))
 
 (defun undercover--create-coveralls-report ()
   "Create test coverage report for coveralls.io."
