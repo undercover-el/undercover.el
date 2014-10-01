@@ -42,7 +42,10 @@
   "Create new hash-table and fill it from KEYS-AND-VALUES."
   (apply #'undercover--fill-hash-table (make-hash-table) keys-and-values))
 
-;; `edebug' related functions:
+;; `edebug' related functions and hacks:
+
+;; http://debbugs.gnu.org/cgi/bugreport.cgi?bug=6415
+(def-edebug-spec cl-destructuring-bind (sexp form body))
 
 (defun undercover--edebug-files (files)
   "Use `edebug' package to instrument all macros and functions in FILES."
