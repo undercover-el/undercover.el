@@ -13,13 +13,13 @@
 
 ;; Provides a test coverage tools for Emacs packages.
 
+;;; Code:
+
 (eval-when-compile (require 'cl))
 
 (require 'edebug)
 (require 'json)
 (require 'shut-up)
-
-;;; Code:
 
 (defconst undercover-version "0.0.1")
 
