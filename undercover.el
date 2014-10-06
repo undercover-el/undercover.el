@@ -49,13 +49,24 @@
 ;; http://debbugs.gnu.org/cgi/bugreport.cgi?bug=6415
 (def-edebug-spec cl-destructuring-bind (sexp form body))
 
-(defun undercover--edebug-files (files)
-  "Use `edebug' package to instrument all macros and functions in FILES."
-  (let ((edebug-all-defs (undercover--coverage-enabled-p)))
-    (save-excursion
-      (dolist (file files)
-        (eval-buffer (find-file file)))))
-  (setq undercover--files files))
+(defun undercover-file-handler (operation &rest args)
+  "Handle `load' OPERATION.  Ignore all ARGS except first."
+  (if (eq 'load operation)
+      (let ((edebug-all-defs (undercover--coverage-enabled-p))
+            (filename (file-truename (car args))))
+        (save-excursion
+          (eval-buffer (find-file filename)))
+        (push filename undercover--files))
+    (let ((inhibit-file-name-handlers
+           (cons 'undercover-file-handler
+                 (and (eq inhibit-file-name-operation operation)
+                      inhibit-file-name-handlers)))
+          (inhibit-file-name-operation operation))
+      (apply operation args))))
+
+(defun undercover--edebug-files (regexp)
+  "Use `edebug' package to instrument all macros and functions in files matched by REGEXP."
+  (add-to-list 'file-name-handler-alist (cons regexp 'undercover-file-handler)))
 
 (setf (symbol-function 'undercover--stop-point-before)
       (lambda (before-index)
@@ -281,15 +292,15 @@ Posible values of REPORT-TYPE: coveralls."
     (t (error "Unsupported report-type"))))
 
 ;;;###autoload
-(defun undercover (&rest files)
-  "Enable test coverage for FILES.
+(defun undercover (regexp)
+  "Enable test coverage for files matched by REGEXP.
 If running under `ert-runner' and Travic CI automatically generate report
 on `kill-emacs' and send it to coveralls.io."
   (when (undercover--coverage-enabled-p)
     (undercover--set-edebug-handlers)
     (when (getenv "ERT_RUNNER_ARGS")
-      (undercover--set-ert-runner-handlers)))
-  (undercover--edebug-files (mapcar #'file-truename files)))
+      (undercover--set-ert-runner-handlers))
+    (undercover--edebug-files regexp)))
 
 (provide 'undercover)
 ;;; undercover.el ends here

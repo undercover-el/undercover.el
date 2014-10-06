@@ -14,7 +14,8 @@
 ;;; Code:
 
 (let ((undercover-force-coverage t))
-  (undercover "undercover.el"))
+  (undercover "undercover.el$")
+  (load "undercover.el"))
 
 (defadvice undercover--report-on-kill (around self-report activate)
   (let ((undercover--files (list (file-truename "undercover.el"))))

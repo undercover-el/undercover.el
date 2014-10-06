@@ -15,9 +15,9 @@ A test coverage library for [Emacs Lisp](http://www.gnu.org/software/emacs/manua
 
   ```lisp
   (source melpa)
-  
+
   (package-file "awesome-package.el")
-  
+
   (development
     (depends-on "undercover" :git "https://github.com/sviridov/undercover.el"))
   ```
@@ -26,8 +26,9 @@ A test coverage library for [Emacs Lisp](http://www.gnu.org/software/emacs/manua
 
   ```lisp
   (require 'undercover)
-  
-  (undercover "awesome-package.el")
+
+  (undercover "awesome.*el$") ; Regexp to match package files
+  (require 'awesome-package)
   ```
 
 - Add your repository to [Coveralls](https://coveralls.io/).
