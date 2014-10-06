@@ -22,12 +22,12 @@ A test coverage library for [Emacs Lisp](http://www.gnu.org/software/emacs/manua
     (depends-on "undercover"))
   ```
 
-- Load your package with `undercover` function in `test/test-helper.el`:
+- Before `load` or `require` your package in `test/test-helper.el`, call `undercover` with regular expression that will match package files:
 
   ```lisp
   (require 'undercover)
 
-  (undercover "awesome.*el$") ; Regexp to match package files
+  (undercover "awesome.*el$")
   (require 'awesome-package)
   ```
 
