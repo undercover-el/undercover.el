@@ -19,7 +19,7 @@ A test coverage library for [Emacs Lisp](http://www.gnu.org/software/emacs/manua
   (package-file "awesome-package.el")
 
   (development
-    (depends-on "undercover" :git "https://github.com/sviridov/undercover.el"))
+    (depends-on "undercover"))
   ```
 
 - Load your package with `undercover` function in `test/test-helper.el`:
