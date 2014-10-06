@@ -287,9 +287,10 @@ Values of that hash are number of covers."
 (defun undercover-report (&optional report-type)
   "Create and submit (if needed) test coverage report based on REPORT-TYPE.
 Posible values of REPORT-TYPE: coveralls."
-  (case (or report-type (undercover--determine-report-type))
-    (coveralls (undercover--coveralls-report))
-    (t (error "Unsupported report-type"))))
+  (when undercover--files
+    (case (or report-type (undercover--determine-report-type))
+      (coveralls (undercover--coveralls-report))
+      (t (error "Unsupported report-type")))))
 
 ;;;###autoload
 (defun undercover (regexp)
