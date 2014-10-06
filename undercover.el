@@ -6,7 +6,7 @@
 ;; URL: https://github.com/sviridov/undercover.el
 ;; Created: Sat Sep 27 2014
 ;; Keywords: lisp, tests, coverage, tools
-;; Version: 0.0.1
+;; Version: 0.1.0
 ;; Package-Requires: ((emacs "24") (shut-up "0.3.2"))
 
 ;;; Commentary:
@@ -21,7 +21,7 @@
 (require 'json)
 (require 'shut-up)
 
-(defconst undercover-version "0.0.1")
+(defconst undercover-version "0.1.0")
 
 (defvar undercover-force-coverage nil
   "If nil, test coverage check will be done only under continuous integration service.")
