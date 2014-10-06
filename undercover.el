@@ -92,11 +92,11 @@
 
 (defun undercover--stop-points (name)
   "Return stop points ordered by position for NAME."
-  (coerce (nth 2 (get name 'edebug)) 'list))
+  (append (nth 2 (get name 'edebug)) nil))
 
 (defun undercover--stop-points-covers (name)
   "Return number of covers for each stop point ordered by position for NAME."
-  (coerce (get name 'edebug-freq-count) 'list))
+  (append (get name 'edebug-freq-count) nil))
 
 (defun undercover--shut-up-edebug-message ()
   "Muffle `edebug' message \"EDEBUG: function\"."
