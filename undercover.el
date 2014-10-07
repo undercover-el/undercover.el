@@ -269,14 +269,14 @@ Values of that hash are number of covers."
 
 ;; `ert-runner' related functions:
 
-(defun undercover--report-on-kill ()
-  "Trigger `undercover-report' before exit."
+(defun undercover-safe-report ()
+  "Version of `undercover-report' that ignore errors."
   (ignore-errors
     (undercover-report)))
 
-(defun undercover--set-ert-runner-handlers ()
-  "Add `undercover-report' to `kill-emacs-hook'."
-  (add-hook 'kill-emacs-hook 'undercover--report-on-kill))
+(defun undercover-report-on-kill ()
+  "Add `undercover-safe-report' to `kill-emacs-hook'."
+  (add-hook 'kill-emacs-hook 'undercover-safe-report))
 
 ;;; Main functions:
 
@@ -300,7 +300,7 @@ on `kill-emacs' and send it to coveralls.io."
   (when (undercover--coverage-enabled-p)
     (undercover--set-edebug-handlers)
     (when (getenv "ERT_RUNNER_ARGS")
-      (undercover--set-ert-runner-handlers))
+      (undercover-report-on-kill))
     (undercover--edebug-files regexp)))
 
 (provide 'undercover)

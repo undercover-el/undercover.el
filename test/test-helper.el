@@ -17,7 +17,7 @@
   (undercover "undercover.el$")
   (load "undercover.el"))
 
-(defadvice undercover--report-on-kill (around self-report activate)
+(defadvice undercover-safe-report (around self-report activate)
   (let ((undercover--files (list (file-truename "undercover.el"))))
     ad-do-it))
 

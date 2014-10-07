@@ -73,9 +73,9 @@
   (with-env-variable "TRAVIS" "true"
     (with-mock
       (stub shell-command)
-      (ad-deactivate 'undercover--report-on-kill)
-      (undercover--report-on-kill)
-      (ad-activate 'undercover--report-on-kill)))
+      (ad-deactivate 'undercover-safe-report)
+      (undercover-safe-report)
+      (ad-activate 'undercover-safe-report)))
 
   (let ((report (json-read-file "/tmp/json_file")))
     (should (string-equal "travis-ci" (assoc-cdr 'service_name report)))
