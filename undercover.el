@@ -296,12 +296,11 @@ Posible values of REPORT-TYPE: coveralls."
 ;;;###autoload
 (defun undercover (regexp)
   "Enable test coverage for files matched by REGEXP.
-If running under `ert-runner' and Travic CI automatically generate report
+If running under Travic CI automatically generate report
 on `kill-emacs' and send it to coveralls.io."
   (when (undercover--coverage-enabled-p)
     (undercover--set-edebug-handlers)
-    (when (getenv "ERT_RUNNER_ARGS")
-      (undercover-report-on-kill))
+    (undercover-report-on-kill)
     (undercover--edebug-files regexp)))
 
 (provide 'undercover)
