@@ -14,6 +14,7 @@ A test coverage library for [Emacs Lisp](http://www.gnu.org/software/emacs/manua
 - Add `undercover.el` to your [Cask](https://github.com/cask/cask) file:
 
   ```lisp
+  (source gnu)
   (source melpa)
 
   (package-file "awesome-package.el")
@@ -29,6 +30,12 @@ A test coverage library for [Emacs Lisp](http://www.gnu.org/software/emacs/manua
 
   (undercover "awesome.*el$")
   (require 'awesome-package)
+  ```
+
+- Add this line unless you are using [ert-runner](https://github.com/rejeep/ert-runner.el):
+
+  ```lisp
+  (undercover-report-on-kill)
   ```
 
 - Add your repository to [Coveralls](https://coveralls.io/).
