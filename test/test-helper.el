@@ -14,7 +14,7 @@
 ;;; Code:
 
 (let ((undercover-force-coverage t))
-  (undercover "undercover.el$")
+  (undercover "undercover.el")
   (load "undercover.el"))
 
 (defadvice undercover-safe-report (around self-report activate)

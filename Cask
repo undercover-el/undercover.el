@@ -5,6 +5,7 @@
 
 (files "*.el")
 
+(depends-on "dash")
 (depends-on "shut-up")
 
 (development

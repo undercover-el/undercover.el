@@ -7,7 +7,7 @@
 ;; Created: Sat Sep 27 2014
 ;; Keywords: lisp, tests, coverage, tools
 ;; Version: 0.1.0
-;; Package-Requires: ((emacs "24") (shut-up "0.3.2"))
+;; Package-Requires: ((emacs "24") (dash "2.0.0") (shut-up "0.3.2"))
 
 ;;; Commentary:
 
@@ -19,6 +19,7 @@
 
 (require 'edebug)
 (require 'json)
+(require 'dash)
 (require 'shut-up)
 
 (defconst undercover-version "0.1.0")
@@ -44,6 +45,16 @@
   "Create new hash-table and fill it from KEYS-AND-VALUES."
   (apply #'undercover--fill-hash-table (make-hash-table) keys-and-values))
 
+(defun undercover--wildcards-to-files (wildcards)
+  "Return list of files matched by WILDCARDS.
+Example of WILDCARDS: (\"*.el\" \"subdir/*.el\" (:exclude \"exclude-*.el\"))."
+  (destructuring-bind (exclude-clauses include-wildcards)
+      (--separate (and (consp it) (eq :exclude (car it))) wildcards)
+    (let* ((exclude-wildcards (-mapcat #'cdr exclude-clauses))
+           (exclude-files (-mapcat #'file-expand-wildcards exclude-wildcards))
+           (include-files (-mapcat #'file-expand-wildcards include-wildcards)))
+      (-difference include-files exclude-files))))
+
 ;; `edebug' related functions and hacks:
 
 ;; http://debbugs.gnu.org/cgi/bugreport.cgi?bug=6415
@@ -65,9 +76,11 @@
           (inhibit-file-name-operation operation))
       (apply operation args))))
 
-(defun undercover--edebug-files (regexp)
-  "Use `edebug' package to instrument all macros and functions in files matched by REGEXP."
-  (add-to-list 'file-name-handler-alist (cons regexp 'undercover-file-handler)))
+(defun undercover--edebug-files (files)
+  "Use `edebug' package to instrument all macros and functions in FILES."
+  (when files
+    (let ((regexp (->> files (regexp-opt) (format "/%s$"))))
+      (add-to-list 'file-name-handler-alist (cons regexp 'undercover-file-handler)))))
 
 (setf (symbol-function 'undercover--stop-point-before)
       (lambda (before-index)
@@ -293,15 +306,21 @@ Posible values of REPORT-TYPE: coveralls."
       (coveralls (undercover--coveralls-report))
       (t (error "Unsupported report-type")))))
 
-;;;###autoload
-(defun undercover (regexp)
-  "Enable test coverage for files matched by REGEXP.
-If running under Travic CI automatically generate report
-on `kill-emacs' and send it to coveralls.io."
+(defun undercover--setup (wildcards)
+  "Enable test coverage for files matched by WILDCARDS."
   (when (undercover--coverage-enabled-p)
     (undercover--set-edebug-handlers)
     (undercover-report-on-kill)
-    (undercover--edebug-files regexp)))
+    (undercover--edebug-files (undercover--wildcards-to-files wildcards))))
+
+;;;###autoload
+(defmacro undercover (&rest wildcards)
+  "Enable test coverage for files matched by WILDCARDS.
+Example of WILDCARDS: (\"*.el\" \"subdir/*.el\" (:exclude \"exclude-*.el\")).
+
+If running under Travic CI automatically generate report
+on `kill-emacs' and send it to coveralls.io."
+  `(undercover--setup ',wildcards))
 
 (provide 'undercover)
 ;;; undercover.el ends here

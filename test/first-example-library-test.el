@@ -22,7 +22,7 @@
 
 (with-env-variable "TRAVIS" "true"
   (let ((undercover-force-coverage nil))
-    (undercover "first-example-library.el$")
+    (undercover "test/first-example-library/*.el")
     (add-to-list 'load-path (file-truename "test/first-example-library"))
     (require 'first-example-library)))
 
