@@ -60,6 +60,7 @@ Example of WILDCARDS: (\"*.el\" \"subdir/*.el\" (:exclude \"exclude-*.el\"))."
 ;; http://debbugs.gnu.org/cgi/bugreport.cgi?bug=6415
 (def-edebug-spec cl-destructuring-bind (sexp form body))
 (def-edebug-spec cl-type-spec sexp)
+(def-edebug-spec symbol-macrolet ((&rest (symbolp sexp)) cl-declarations body))
 
 (defun undercover-file-handler (operation &rest args)
   "Handle `load' OPERATION.  Ignore all ARGS except first."
