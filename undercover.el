@@ -69,6 +69,7 @@ Example of WILDCARDS: (\"*.el\" \"subdir/*.el\" (:exclude \"exclude-*.el\"))."
             (filename (file-truename (car args))))
         (save-excursion
           (eval-buffer (find-file filename)))
+        (switch-to-buffer (current-buffer))
         (push filename undercover--files))
     (let ((inhibit-file-name-handlers
            (cons 'undercover-file-handler
