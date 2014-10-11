@@ -33,6 +33,9 @@
 (defvar undercover--files-coverage-statistics (make-hash-table :test 'equal)
   "Table of coverage statistics for each file in `undercover--files'.")
 
+(defvar undercover--old-edebug-make-form-wrapper
+  (symbol-function 'edebug-make-form-wrapper))
+
 ;; Utilities
 
 (defun undercover--fill-hash-table (hash-table &rest keys-and-values)
@@ -118,8 +121,11 @@ Example of WILDCARDS: (\"*.el\" \"subdir/*.el\" (:exclude \"exclude-*.el\"))."
 
 (defun undercover--shut-up-edebug-message ()
   "Muffle `edebug' message \"EDEBUG: function\"."
-  (defadvice edebug-make-form-wrapper (around undercover-shut-up activate)
-    (shut-up ad-do-it)))
+  ;; HACK: I don't use `defadvice' because of cryptic error with `shut-up-sink'.
+  ;; https://travis-ci.org/sviridov/multiple-cursors.el/builds/37529750
+  (setf (symbol-function 'edebug-make-form-wrapper)
+        (lambda (&rest args)
+          (shut-up (apply undercover--old-edebug-make-form-wrapper args)))))
 
 (defun undercover--set-edebug-handlers ()
   "Replace and advice some `edebug' functions with `undercover' handlers."
