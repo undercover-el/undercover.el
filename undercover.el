@@ -174,8 +174,10 @@ Values of that hash are number of covers."
   "Collect coverage statistics for FILE."
   (save-excursion
     (find-file file)
-    (undercover--fill-hash-table undercover--files-coverage-statistics
-      file (undercover--file-coverage-statistics))))
+    (if edebug-form-data
+        (undercover--fill-hash-table undercover--files-coverage-statistics
+          file (undercover--file-coverage-statistics))
+      (setq undercover--files (delq file undercover--files)))))
 
 (defun undercover--collect-files-coverage (files)
   "Collect coverage statistics for each file in FILES."
