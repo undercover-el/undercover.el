@@ -122,7 +122,8 @@ Example of WILDCARDS: (\"*.el\" \"subdir/*.el\" (:exclude \"exclude-*.el\"))."
 (defun undercover--shut-up-edebug-message ()
   "Muffle `edebug' message \"EDEBUG: function\"."
   ;; HACK: I don't use `defadvice' because of cryptic error with `shut-up-sink'.
-  ;; https://travis-ci.org/sviridov/multiple-cursors.el/builds/37529750
+  ;; https://travis-ci.org/sviridov/multiple-cursors.el/builds/37529750#L1387
+  ;; https://travis-ci.org/sviridov/expand-region.el/builds/37576813#L285
   (setf (symbol-function 'edebug-make-form-wrapper)
         (lambda (&rest args)
           (shut-up (apply undercover--old-edebug-make-form-wrapper args)))))
@@ -131,7 +132,12 @@ Example of WILDCARDS: (\"*.el\" \"subdir/*.el\" (:exclude \"exclude-*.el\"))."
   "Replace and advice some `edebug' functions with `undercover' handlers."
   (defalias 'edebug-before 'undercover--stop-point-before)
   (defalias 'edebug-after 'undercover--stop-point-after)
-  (undercover--shut-up-edebug-message))
+  (undercover--shut-up-edebug-message)
+  ;; HACK: Ensures that debugger is turned off.
+  ;; https://travis-ci.org/sviridov/multiple-cursors.el/builds/37672312#L350
+  ;; https://travis-ci.org/sviridov/expand-region.el/builds/37577423#L336
+  (setq debug-on-error  nil
+        debug-on-signal nil))
 
 ;; Coverage statistics related functions:
 
