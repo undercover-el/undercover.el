@@ -23,7 +23,7 @@ A test coverage library for [Emacs Lisp](http://www.gnu.org/software/emacs/manua
     (depends-on "undercover"))
   ```
 
-- Before `load` or `require` your package in `test/test-helper.el` (or analogue), call `undercover` with wildcards that will match package files:
+- Before `load` or `require` your package in `test/test-helper.el` or `features/support/env.el` (or analogue), call `undercover` with wildcards that will match package files:
 
   ```lisp
   (require 'undercover)
