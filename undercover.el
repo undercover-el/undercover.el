@@ -24,6 +24,12 @@
 
 (defconst undercover-version "0.2.0")
 
+(defvar undercover-send-report t
+  "If not nil, test coverage report will be sent to coveralls.io.")
+
+(defvar undercover-report-file-path "/tmp/undercover_coveralls_report"
+  "Path to save coveralls.io report.")
+
 (defvar undercover-force-coverage nil
   "If nil, test coverage check will be done only under continuous integration service.")
 
@@ -285,23 +291,28 @@ Values of that hash are number of covers."
     (undercover--fill-coveralls-report report)
     (json-encode report)))
 
-(defun undercover--send-coveralls-report (json-report)
-  "Send JSON-REPORT to coveralls.io."
+(defun undercover--save-coveralls-report (json-report)
+  "Save JSON-REPORT to `undercover-report-file-path'."
   (save-excursion
-    (let ((json-file "/tmp/json_file")
-          (coveralls-url "https://coveralls.io/api/v1/jobs"))
-      (shut-up
-        (find-file json-file)
-        (erase-buffer)
-        (insert json-report)
-        (save-buffer))
-      (message "Sending: report to coveralls.io")
-      (shell-command (format "curl -v -include --form json_file=@%s %s" json-file coveralls-url))
-      (message "Sending: OK"))))
+    (shut-up
+      (find-file undercover-report-file-path)
+      (erase-buffer)
+      (insert json-report)
+      (save-buffer))))
+
+(defun undercover--send-coveralls-report ()
+  "Send report to coveralls.io."
+  (let ((coveralls-url "https://coveralls.io/api/v1/jobs"))
+    (message "Sending: report to coveralls.io")
+    (shell-command
+     (format "curl -v -include --form json_file=@%s %s" undercover-report-file-path coveralls-url))
+    (message "Sending: OK")))
 
 (defun undercover--coveralls-report ()
   "Create and submit test coverage report to coveralls.io."
-  (undercover--send-coveralls-report (undercover--create-coveralls-report)))
+  (undercover--save-coveralls-report (undercover--create-coveralls-report))
+  (when undercover-send-report
+    (undercover--send-coveralls-report)))
 
 ;; `ert-runner' related functions:
 

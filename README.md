@@ -33,3 +33,7 @@ A test coverage library for [Emacs Lisp](http://www.gnu.org/software/emacs/manua
   ```
 
 - Add your repository to [Coveralls](https://coveralls.io/).
+
+## Configuration
+
+- Set `undercover-send-report` (to `nil`) and `undercover-report-file-path` (to required path) if you want to save coverage report locally.

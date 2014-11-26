@@ -77,7 +77,7 @@
       (undercover-safe-report)
       (ad-activate 'undercover-safe-report)))
 
-  (let ((report (json-read-file "/tmp/json_file")))
+  (let ((report (json-read-file undercover-report-file-path)))
     (should (string-equal "travis-ci" (assoc-cdr 'service_name report)))
     (let ((file-report (aref (assoc-cdr 'source_files report) 0)))
       (should (string-equal "test/first-example-library/first-example-library.el"
