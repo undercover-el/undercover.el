@@ -79,11 +79,12 @@ Example of WILDCARDS: (\"*.el\" \"subdir/*.el\" (:exclude \"exclude-*.el\"))."
   "Handle `load' OPERATION.  Ignore all ARGS except first."
   (if (eq 'load operation)
       (let ((edebug-all-defs (undercover--coverage-enabled-p))
-            (filename (file-truename (car args))))
+            (load-file-name (file-truename (car args)))
+            (load-in-progress t))
         (save-excursion
-          (eval-buffer (find-file filename)))
+          (eval-buffer (find-file load-file-name)))
         (switch-to-buffer (current-buffer))
-        (push filename undercover--files))
+        (push load-file-name undercover--files))
     (let ((inhibit-file-name-handlers
            (cons 'undercover-file-handler
                  (and (eq inhibit-file-name-operation operation)
