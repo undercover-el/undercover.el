@@ -24,14 +24,14 @@
 
 (defconst undercover-version "0.2.0")
 
-(defvar undercover-send-report t
-  "If not nil, test coverage report will be sent to coveralls.io.")
-
-(defvar undercover-report-file-path "/tmp/undercover_coveralls_report"
-  "Path to save coveralls.io report.")
-
 (defvar undercover-force-coverage nil
   "If nil, test coverage check will be done only under continuous integration service.")
+
+(defvar undercover--send-report t
+  "If not nil, test coverage report will be sent to coveralls.io.")
+
+(defvar undercover--report-file-path "/tmp/undercover_coveralls_report"
+  "Path to save coveralls.io report.")
 
 (defvar undercover--files nil
   "List of files for test coverage check.")
@@ -293,10 +293,10 @@ Values of that hash are number of covers."
     (json-encode report)))
 
 (defun undercover--save-coveralls-report (json-report)
-  "Save JSON-REPORT to `undercover-report-file-path'."
+  "Save JSON-REPORT to `undercover--report-file-path'."
   (save-excursion
     (shut-up
-      (find-file undercover-report-file-path)
+      (find-file undercover--report-file-path)
       (erase-buffer)
       (insert json-report)
       (save-buffer))))
@@ -306,13 +306,13 @@ Values of that hash are number of covers."
   (let ((coveralls-url "https://coveralls.io/api/v1/jobs"))
     (message "Sending: report to coveralls.io")
     (shell-command
-     (format "curl -v -include --form json_file=@%s %s" undercover-report-file-path coveralls-url))
+     (format "curl -v -include --form json_file=@%s %s" undercover--report-file-path coveralls-url))
     (message "Sending: OK")))
 
 (defun undercover--coveralls-report ()
   "Create and submit test coverage report to coveralls.io."
   (undercover--save-coveralls-report (undercover--create-coveralls-report))
-  (when undercover-send-report
+  (when undercover--send-report
     (undercover--send-coveralls-report)))
 
 ;; `ert-runner' related functions:
@@ -340,21 +340,37 @@ Posible values of REPORT-TYPE: coveralls."
       (coveralls (undercover--coveralls-report))
       (t (error "Unsupported report-type")))))
 
-(defun undercover--setup (wildcards)
-  "Enable test coverage for files matched by WILDCARDS."
+(defun undercover--set-options (configuration)
+  "Read CONFIGURATION.
+Set `undercover--send-report' and `undercover--report-file-path'.
+Return wildcards."
+  (destructuring-bind (wildcards options)
+      (--separate (or (stringp it) (eq :exclude (car-safe it))) configuration)
+    (dolist (option options wildcards)
+      (case (car-safe option)
+        (:report-file (setq undercover--send-report nil
+                            undercover--report-file-path (cadr option)))
+        (otherwise (error "Unsupported option: %s" option))))))
+
+(defun undercover--setup (configuration)
+  "Enable test coverage for files matched by CONFIGURATION."
   (when (undercover--coverage-enabled-p)
     (undercover--set-edebug-handlers)
     (undercover-report-on-kill)
-    (undercover--edebug-files (undercover--wildcards-to-files wildcards))))
+    (let ((wildcards (undercover--set-options configuration)))
+      (undercover--edebug-files (undercover--wildcards-to-files wildcards)))))
 
 ;;;###autoload
-(defmacro undercover (&rest wildcards)
-  "Enable test coverage for files matched by WILDCARDS.
-Example of WILDCARDS: (\"*.el\" \"subdir/*.el\" (:exclude \"exclude-*.el\")).
+(defmacro undercover (&rest configuration)
+  "Enable test coverage for files matched by CONFIGURATION.
+Example of CONFIGURATION: (\"*.el\" \"subdir/*.el\" (:exclude \"exclude-*.el\")).
 
 If running under Travic CI automatically generate report
 on `kill-emacs' and send it to coveralls.io."
-  `(undercover--setup ',wildcards))
+  `(undercover--setup
+    (list
+     ,@(--map (if (atom it) it `(list ,@it))
+              configuration))))
 
 (provide 'undercover)
 ;;; undercover.el ends here

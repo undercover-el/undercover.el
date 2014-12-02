@@ -13,6 +13,9 @@
 (defconst first-example-library-filename
   "test/first-example-library/first-example-library.el")
 
+(defconst first-example-library-report-file
+  "/tmp/first-example-library-report.json")
+
 (defmacro with-env-variable (name value &rest body)
   "Set environment variable NAME to VALUE and evaluate BODY."
  `(let ((---old-env-var--- (getenv ,name)))
@@ -22,7 +25,7 @@
 
 (with-env-variable "TRAVIS" "true"
   (let ((undercover-force-coverage nil))
-    (undercover "test/first-example-library/*.el")
+    (undercover "test/first-example-library/*.el" (:report-file first-example-library-report-file))
     (add-to-list 'load-path (file-truename "test/first-example-library"))
     (require 'first-example-library)))
 
@@ -71,13 +74,11 @@
 
 (ert-deftest test-7/check-coveralls-report ()
   (with-env-variable "TRAVIS" "true"
-    (with-mock
-      (stub shell-command)
-      (ad-deactivate 'undercover-safe-report)
-      (undercover-safe-report)
-      (ad-activate 'undercover-safe-report)))
+    (ad-deactivate 'undercover-safe-report)
+    (undercover-safe-report)
+    (ad-activate 'undercover-safe-report))
 
-  (let ((report (json-read-file undercover-report-file-path)))
+  (let ((report (json-read-file first-example-library-report-file)))
     (should (string-equal "travis-ci" (assoc-cdr 'service_name report)))
     (let ((file-report (aref (assoc-cdr 'source_files report) 0)))
       (should (string-equal "test/first-example-library/first-example-library.el"

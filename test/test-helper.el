@@ -8,7 +8,6 @@
 
 ;; Test suite setup for ERT Runner.
 
-(require 'el-mock)
 (require 'undercover)
 
 ;;; Code:
@@ -18,7 +17,9 @@
   (load "undercover.el"))
 
 (defadvice undercover-safe-report (around self-report activate)
-  (let ((undercover--files (list (file-truename "undercover.el"))))
+  (let ((undercover--files (list (file-truename "undercover.el")))
+        (undercover--send-report t)
+        (undercover--report-file-path "/tmp/undercover-coverage.json"))
     ad-do-it))
 
 (message "Running tests on Emacs %s" emacs-version)
