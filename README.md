@@ -7,7 +7,7 @@ A test coverage library for [Emacs Lisp](http://www.gnu.org/software/emacs/manua
 `undercover.el` is on earlier stage of development and has some important issues:
 
 - it assumes a certain development cycle of your package (using [Cask](https://github.com/cask/cask), [Travis CI](https://travis-ci.org/) and [Coveralls](https://coveralls.io/));
-- it based on `edebug` and can have some issues with errors and macros coverage.
+- it based on `edebug` and can have some issues with macros coverage.
 
 ## Installation
 

@@ -106,12 +106,15 @@ Example of WILDCARDS: (\"*.el\" \"subdir/*.el\" (:exclude \"exclude-*.el\"))."
         before-index))
 
 (setf (symbol-function 'undercover--stop-point-after)
-      (lambda (before-index after-index value)
-        "Increase number of times that stop point at AFTER-INDEX was covered."
-        (when (boundp 'edebug-freq-count)
-          (incf (aref edebug-freq-count after-index))
-          (undercover--align-counts-between-stop-points before-index after-index))
-        value))
+      (cons 'macro
+        (lambda (before-index after-index form)
+          "Increase number of times that stop point at AFTER-INDEX was covered."
+         `(let ((before-index ,before-index)
+                (after-index ,after-index))
+            (unwind-protect ,form
+              (when (boundp 'edebug-freq-count)
+                (aset edebug-freq-count after-index (+ 1 (aref edebug-freq-count after-index)))
+                (undercover--align-counts-between-stop-points before-index after-index)))))))
 
 (setf (symbol-function 'undercover--align-counts-between-stop-points)
       (lambda (before-index after-index)
