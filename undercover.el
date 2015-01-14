@@ -308,8 +308,9 @@ Values of that hash are number of covers."
   "Send report to coveralls.io."
   (let ((coveralls-url "https://coveralls.io/api/v1/jobs"))
     (message "Sending: report to coveralls.io")
-    (shell-command
-     (format "curl -v -include --form json_file=@%s %s" undercover--report-file-path coveralls-url))
+    (shut-up
+     (shell-command
+      (format "curl -v -include --form json_file=@%s %s" undercover--report-file-path coveralls-url)))
     (message "Sending: OK")))
 
 (defun undercover--coveralls-report ()
