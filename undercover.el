@@ -75,6 +75,8 @@ Example of WILDCARDS: (\"*.el\" \"subdir/*.el\" (:exclude \"exclude-*.el\"))."
 
 (def-edebug-spec cl-type-spec sexp)
 
+(def-edebug-spec when-let ([&or (symbolp form) (&rest (symbolp form))] body))
+
 (defun undercover-file-handler (operation &rest args)
   "Handle `load' OPERATION.  Ignore all ARGS except first."
   (if (eq 'load operation)
