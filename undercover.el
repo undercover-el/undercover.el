@@ -202,9 +202,13 @@ Values of that hash are number of covers."
   "Check that `undercover' running under Travis CI service."
   (getenv "TRAVIS"))
 
+(defun undercover--coveralls-repo-token ()
+  "Return coveralls.io repo token provided by user."
+  (getenv "COVERALLS_REPO_TOKEN"))
+
 (defun undercover--under-ci-p ()
   "Check that `undercover' running under continuous integration service."
-  (undercover--under-travic-ci-p))
+  (or (undercover--coveralls-repo-token) (undercover--under-travic-ci-p)))
 
 ;;; Reports related functions:
 
@@ -240,6 +244,10 @@ Values of that hash are number of covers."
           (push remote-table remotes-info))))))
 
 ;; coveralls.io report:
+
+(defun undercover--update-coveralls-report-with-repo-token (report)
+  "Update test coverage REPORT for coveralls.io with repository token."
+  (puthash "repo_token" (undercover--coveralls-repo-token) report))
 
 (defun undercover--update-coveralls-report-with-travis-ci (report)
   "Update test coverage REPORT for coveralls.io with Travis CI service information."
@@ -291,6 +299,7 @@ Values of that hash are number of covers."
   (undercover--collect-files-coverage undercover--files)
   (let ((report (make-hash-table)))
     (cond
+     ((undercover--coveralls-repo-token) (undercover--update-coveralls-report-with-repo-token report))
      ((undercover--under-travic-ci-p) (undercover--update-coveralls-report-with-travis-ci report))
      (t (error "Unsupported coveralls.io report")))
     (undercover--update-coveralls-report-with-git report)
