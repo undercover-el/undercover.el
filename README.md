@@ -36,6 +36,12 @@ A test coverage library for [Emacs Lisp](http://www.gnu.org/software/emacs/manua
 
 ## Configuration
 
+- If you don't use [Travis CI](https://travis-ci.org/) you need to set `COVERALLS_REPO_TOKEN` environment variable before running tests, for example:
+
+  ```sh
+  $ COVERALLS_REPO_TOKEN=<your-coveralls-repo-token> cask exec ert-runner
+  ```
+
 - Set `report-file` option if you want to save coverage report locally:
 
   ```lisp
