@@ -249,6 +249,16 @@ Values of that hash are number of covers."
   "Update test coverage REPORT for coveralls.io with repository token."
   (puthash "repo_token" (undercover--coveralls-repo-token) report))
 
+(defun undercover--try-update-coveralls-report-with-shippable (report)
+  "Update test coverage REPORT for coveralls.io with Shippable service information."
+  (when (getenv "SHIPPABLE")
+    (undercover--fill-hash-table report
+      "service_name"   "shippable"
+      "service_job_id" (getenv "BUILD_NUMBER"))
+    (unless (string-equal "false" (getenv "PULL_REQUEST"))
+      (undercover--fill-hash-table report
+        "service_pull_request" (getenv "PULL_REQUEST")))))
+
 (defun undercover--update-coveralls-report-with-travis-ci (report)
   "Update test coverage REPORT for coveralls.io with Travis CI service information."
   (undercover--fill-hash-table report
@@ -299,7 +309,9 @@ Values of that hash are number of covers."
   (undercover--collect-files-coverage undercover--files)
   (let ((report (make-hash-table)))
     (cond
-     ((undercover--coveralls-repo-token) (undercover--update-coveralls-report-with-repo-token report))
+     ((undercover--coveralls-repo-token)
+      (undercover--update-coveralls-report-with-repo-token report)
+      (undercover--try-update-coveralls-report-with-shippable report))
      ((undercover--under-travic-ci-p) (undercover--update-coveralls-report-with-travis-ci report))
      (t (error "Unsupported coveralls.io report")))
     (undercover--update-coveralls-report-with-git report)
