@@ -42,8 +42,16 @@ A test coverage library for [Emacs Lisp](http://www.gnu.org/software/emacs/manua
   $ COVERALLS_REPO_TOKEN=<your-coveralls-repo-token> cask exec ert-runner
   ```
 
-- Set `report-file` option if you want to save coverage report locally:
+- Set `report-file` option if you want to change report location:
 
   ```lisp
   (undercover "*.el" (:report-file "/tmp/local-report.json"))
+  ```
+
+  `undercover.el` will try to merge new report with existing one.
+
+- Set `send-report` option to `nil` if you want to save coverage report locally:
+
+  ```lisp
+  (undercover "*.el" (:send-report nil))
   ```

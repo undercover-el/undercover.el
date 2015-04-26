@@ -52,7 +52,7 @@
 
 (defun undercover--make-hash-table (&rest keys-and-values)
   "Create new hash-table and fill it from KEYS-AND-VALUES."
-  (apply #'undercover--fill-hash-table (make-hash-table) keys-and-values))
+  (apply #'undercover--fill-hash-table (make-hash-table :test 'equal) keys-and-values))
 
 (defun undercover--wildcards-to-files (wildcards)
   "Return list of files matched by WILDCARDS.
@@ -304,10 +304,43 @@ Values of that hash are number of covers."
   (undercover--fill-hash-table report
     "source_files" (mapcar #'undercover--coveralls-file-report undercover--files)))
 
+(defun undercover--merge-coveralls-report-file-lines-coverage (old-coverage new-coverage)
+  "Merge test coverage for lines from OLD-COVERAGE and NEW-COVERAGE."
+  (loop for (old-line-coverage . new-line-coverage)
+        in (-zip-fill 0 old-coverage new-coverage)
+        collect (cond
+                 ((null old-line-coverage) new-line-coverage)
+                 ((null new-line-coverage) old-line-coverage)
+                 (t (+ new-line-coverage old-line-coverage)))))
+
+(defun undercover--merge-coveralls-report-file-coverage (old-file-hash source-files-report)
+  "Merge test coverage from OLD-FILE-HASH into SOURCE-FILES-REPORT."
+  (let* ((file-name (gethash "name" old-file-hash))
+         (old-coverage (gethash "coverage" old-file-hash))
+         (new-file-hash (--first (string-equal file-name (gethash "name" it))
+                                 source-files-report)))
+    (if new-file-hash
+        (undercover--fill-hash-table new-file-hash
+          "coverage" (undercover--merge-coveralls-report-file-lines-coverage
+                      old-coverage (gethash "coverage" new-file-hash)))
+      (rplacd (last source-files-report)
+              (cons old-file-hash nil)))))
+
+(defun undercover--merge-coveralls-reports (report)
+  "Merge test coverage REPORT with existing from `undercover--report-file-path'."
+  (ignore-errors
+    (let* ((json-object-type 'hash-table)
+           (json-array-type 'list)
+           (old-report (json-read-file undercover--report-file-path))
+           (new-source-files-report (gethash "source_files" report)))
+      (dolist (old-file-hash (gethash "source_files" old-report))
+        (undercover--merge-coveralls-report-file-coverage
+         old-file-hash new-source-files-report)))))
+
 (defun undercover--create-coveralls-report ()
   "Create test coverage report for coveralls.io."
   (undercover--collect-files-coverage undercover--files)
-  (let ((report (make-hash-table)))
+  (let ((report (make-hash-table :test 'equal)))
     (cond
      ((undercover--coveralls-repo-token)
       (undercover--update-coveralls-report-with-repo-token report)
@@ -316,6 +349,7 @@ Values of that hash are number of covers."
      (t (error "Unsupported coveralls.io report")))
     (undercover--update-coveralls-report-with-git report)
     (undercover--fill-coveralls-report report)
+    (undercover--merge-coveralls-reports report)
     (json-encode report)))
 
 (defun undercover--save-coveralls-report (json-report)
@@ -375,8 +409,8 @@ Return wildcards."
       (--separate (or (stringp it) (eq :exclude (car-safe it))) configuration)
     (dolist (option options wildcards)
       (case (car-safe option)
-        (:report-file (setq undercover--send-report nil
-                            undercover--report-file-path (cadr option)))
+        (:report-file (setq undercover--report-file-path (cadr option)))
+        (:send-report (setq undercover--send-report (cadr option)))
         (otherwise (error "Unsupported option: %s" option))))))
 
 (defun undercover--setup (configuration)
