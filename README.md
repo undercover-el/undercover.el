@@ -51,8 +51,8 @@ A test coverage library for [Emacs Lisp](http://www.gnu.org/software/emacs/manua
 
   `undercover.el` will try to merge new report with existing one.
 
-- Set `send-report` option to `nil` if you want to save coverage report locally:
+- Set `send-report` option to `nil` if you don't want to send coverage report:
 
   ```lisp
-  (undercover "*.el" (:send-report nil))
+  (undercover "*.el" (:report-file "/tmp/local-report.json") (:send-report nil))
   ```
