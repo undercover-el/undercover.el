@@ -25,11 +25,12 @@
 
 (with-env-variable "TRAVIS" "true"
   (let ((undercover-force-coverage nil))
-    (undercover "test/first-example-library/*.el" (:report-file first-example-library-report-file))
+    (undercover "test/first-example-library/*.el"
+      (:report-file first-example-library-report-file)
+      (:send-report nil))
+    (ignore-errors (delete-file first-example-library-report-file))
     (add-to-list 'load-path (file-truename "test/first-example-library"))
     (require 'first-example-library)))
-
-(defun assoc-cdr (key alist) (cdr (assoc key alist)))
 
 (ert-deftest test-1/edebug-handlers-are-setted ()
   (should (eq 'undercover--stop-point-before (symbol-function 'edebug-before)))
@@ -78,31 +79,39 @@
     (undercover-safe-report)
     (ad-activate 'undercover-safe-report))
 
-  (let ((report (json-read-file first-example-library-report-file)))
-    (should (string-equal "travis-ci" (assoc-cdr 'service_name report)))
-    (let ((file-report (aref (assoc-cdr 'source_files report) 0)))
-      (should (string-equal "test/first-example-library/first-example-library.el"
-                            (assoc-cdr 'name file-report)))
+  (let* ((json-object-type 'hash-table)
+         (json-array-type 'list)
+         (report (json-read-file first-example-library-report-file)))
 
-      (should (string-equal (save-excursion
-                              (find-file (file-truename "test/first-example-library/first-example-library.el"))
-                              (buffer-substring-no-properties (point-min) (point-max)))
+    (cl-flet ((check-lines-statistics (multiplier example-library-statistics)
+                ;; distance statistics
+                (dolist (line '(14 15 16 17 18 19))
+                  (should (= (* multiplier 2) (nth line example-library-statistics))))
 
-                            (assoc-cdr 'source file-report)))
+                (should-not (nth 13 example-library-statistics))
+                (should-not (nth 20 example-library-statistics))
 
-      (let ((example-library-statistics (assoc-cdr 'coverage file-report)))
-        ;; distance statistics
-        (dolist (line '(14 15 16 17 18 19))
-          (should (= 2 (aref example-library-statistics line))))
+                ;; fib statistics
+                (should (= (* multiplier 27) (nth 23 example-library-statistics)))
+                (should (= (* multiplier 27) (nth 24 example-library-statistics)))
+                (should (= (* multiplier 21) (nth 25 example-library-statistics)))
+                (should (= (* multiplier 12) (nth 26 example-library-statistics)))))
 
-        (should-not (aref example-library-statistics 13))
-        (should-not (aref example-library-statistics 20))
+      (should (string-equal "travis-ci" (gethash "service_name" report)))
 
-        ;; fib statistics
-        (should (= 27 (aref example-library-statistics 23)))
-        (should (= 27 (aref example-library-statistics 24)))
-        (should (= 21 (aref example-library-statistics 25)))
-        (should (= 12 (aref example-library-statistics 26)))))))
+      (let ((file-report (car (gethash "source_files" report))))
+        (should (string-equal "test/first-example-library/first-example-library.el"
+                              (gethash "name" file-report)))
+
+        (should (string-equal (save-excursion
+                                (find-file (file-truename "test/first-example-library/first-example-library.el"))
+                                (buffer-substring-no-properties (point-min) (point-max)))
+
+                              (gethash "source" file-report)))
+
+        (check-lines-statistics 1 (gethash "coverage" file-report))
+        (undercover--merge-coveralls-reports report)
+        (check-lines-statistics 2 (gethash "coverage" file-report))))))
 
 (ert-deftest test-8/should-error ()
   (with-env-variable "TRAVIS" nil
