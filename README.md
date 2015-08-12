@@ -30,9 +30,9 @@ Check out [undercover.el usage example](https://github.com/sviridov/undercover.e
 - Before `load` or `require` your package in `test/test-helper.el` or `features/support/env.el` (or analogue), call `undercover` with wildcards that will match package files:
 
   ```lisp
-  (require 'undercover)
-
-  (undercover "*.el" "awesome-extensions/*.el" (:exclude "*-test.el"))
+  (when (require 'undercover nil t)
+    (undercover "*.el" "awesome-extensions/*.el" (:exclude "awesome-examples.el")))
+  
   (require 'awesome-package)
   ```
 
