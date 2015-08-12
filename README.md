@@ -1,14 +1,17 @@
 # undercover.el
-[![Coverage Status](https://img.shields.io/coveralls/sviridov/undercover.el.svg)](https://coveralls.io/r/sviridov/undercover.el?branch=master) [![Build Status](https://travis-ci.org/sviridov/undercover.el.svg)](https://travis-ci.org/sviridov/undercover.el) [![license](http://img.shields.io/badge/license-MIT-brightgreen.svg)](https://github.com/sviridov/undercover.el/blob/master/LICENSE) [![MELPA](http://melpa.org/packages/undercover-badge.svg)](http://melpa.org/#/undercover) [![MELPA stable](http://stable.melpa.org/packages/undercover-badge.svg)](http://stable.melpa.org/#/undercover)
+[![Coverage Status](https://coveralls.io/repos/sviridov/undercover.el/badge.svg)](https://coveralls.io/r/sviridov/undercover.el?branch=master) [![Build Status](https://travis-ci.org/sviridov/undercover.el.svg)](https://travis-ci.org/sviridov/undercover.el) [![license](http://img.shields.io/badge/license-MIT-brightgreen.svg)](https://github.com/sviridov/undercover.el/blob/master/LICENSE) [![MELPA](http://melpa.org/packages/undercover-badge.svg)](http://melpa.org/#/undercover) [![MELPA stable](http://stable.melpa.org/packages/undercover-badge.svg)](http://stable.melpa.org/#/undercover)
 
 A test coverage library for [Emacs Lisp](http://www.gnu.org/software/emacs/manual/html_node/elisp/index.html).
 
 ## Notes
 
-`undercover.el` is on earlier stage of development and has some important issues:
+Few important notes about `undercover.el`:
 
 - it assumes a certain development cycle of your package (using [Cask](https://github.com/cask/cask), [Travis CI](https://travis-ci.org/) and [Coveralls](https://coveralls.io/));
+- it doesn't support test coverage for byte-compiled files;
 - it based on `edebug` and can have some issues with macros coverage.
+
+Check out [undercover.el usage example](https://github.com/sviridov/undercover.el-usage-example) for more information.
 
 ## Installation
 
