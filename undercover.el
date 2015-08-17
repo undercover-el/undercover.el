@@ -77,22 +77,39 @@ Example of WILDCARDS: (\"*.el\" \"subdir/*.el\" (:exclude \"exclude-*.el\"))."
 
 (def-edebug-spec when-let ([&or (symbolp form) (&rest (symbolp form))] body))
 
+(defun undercover--fallback-file-handler (operation args)
+  "Handle any file OPERATION with ARGS."
+  (let ((inhibit-file-name-handlers
+         (cons 'undercover-file-handler
+               (and (eq inhibit-file-name-operation operation)
+                    inhibit-file-name-handlers)))
+        (inhibit-file-name-operation operation))
+    (apply operation args)))
+
+(defun undercover--load-file-handler (file)
+  "Handle `load' FILE operation."
+  (let ((edebug-all-defs (undercover--coverage-enabled-p))
+        (load-file-name (file-truename file))
+        (load-in-progress t))
+    (unwind-protect
+        (progn
+          (save-excursion (eval-buffer (find-file load-file-name)))
+          (push load-file-name undercover--files))
+      (switch-to-buffer (current-buffer)))))
+
+(defun undercover--show-load-file-error (filename)
+  (message "UNDERCOVER: error while covering %s" filename)
+  (message "UNDERCOVER: please open a new issue at https://github.com/sviridov/undercover.el/issues"))
+
 (defun undercover-file-handler (operation &rest args)
   "Handle `load' OPERATION.  Ignore all ARGS except first."
   (if (eq 'load operation)
-      (let ((edebug-all-defs (undercover--coverage-enabled-p))
-            (load-file-name (file-truename (car args)))
-            (load-in-progress t))
-        (save-excursion
-          (eval-buffer (find-file load-file-name)))
-        (switch-to-buffer (current-buffer))
-        (push load-file-name undercover--files))
-    (let ((inhibit-file-name-handlers
-           (cons 'undercover-file-handler
-                 (and (eq inhibit-file-name-operation operation)
-                      inhibit-file-name-handlers)))
-          (inhibit-file-name-operation operation))
-      (apply operation args))))
+      (condition-case nil
+          (undercover--load-file-handler (car args))
+        (error
+         (undercover--show-load-file-error (car args))
+         (undercover--fallback-file-handler operation args)))
+    (undercover--fallback-file-handler operation args)))
 
 (defun undercover--edebug-files (files)
   "Use `edebug' package to instrument all macros and functions in FILES."
@@ -153,7 +170,8 @@ Example of WILDCARDS: (\"*.el\" \"subdir/*.el\" (:exclude \"exclude-*.el\"))."
   ;; https://travis-ci.org/sviridov/multiple-cursors.el/builds/37672312#L350
   ;; https://travis-ci.org/sviridov/expand-region.el/builds/37577423#L336
   (setq debug-on-error  nil
-        debug-on-signal nil))
+        debug-on-signal nil
+        edebug-on-error nil))
 
 ;; Coverage statistics related functions:
 
