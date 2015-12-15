@@ -9,4 +9,5 @@
 (depends-on "shut-up")
 
 (development
-  (depends-on "ert-runner"))
+  (depends-on "ert-runner")
+  (depends-on "s"))
