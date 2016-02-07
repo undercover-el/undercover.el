@@ -11,7 +11,7 @@ Few important notes about `undercover.el`:
 - it doesn't support test coverage for byte-compiled files;
 - it based on `edebug` and can have some issues with macros coverage.
 
-Check out [undercover.el usage example](https://github.com/sviridov/undercover.el-usage-example) for more information.
+Check out [combined usage example](https://github.com/sviridov/undercover.el-combined-usage-example) and [buttercup integration example](https://github.com/sviridov/undercover.el-buttercup-integration-example) for more information.
 
 ## Installation
 
@@ -32,7 +32,7 @@ Check out [undercover.el usage example](https://github.com/sviridov/undercover.e
   ```lisp
   (when (require 'undercover nil t)
     (undercover "*.el" "awesome-extensions/*.el" (:exclude "awesome-examples.el")))
-  
+
   (require 'awesome-package)
   ```
 
