@@ -419,6 +419,15 @@ Posible values of REPORT-TYPE: coveralls."
       (coveralls (undercover--coveralls-report))
       (t (error "Unsupported report-type")))))
 
+(defun undercover--env-configuration ()
+  "Read configuration from UNDERCOVER_CONFIG."
+  (let ((configuration (getenv "UNDERCOVER_CONFIG")))
+    (when configuration
+      (condition-case nil
+          (car (read-from-string configuration))
+        (error
+         (error "UNDERCOVER: error while parsing configuration"))))))
+
 (defun undercover--set-options (configuration)
   "Read CONFIGURATION.
 Set `undercover--send-report' and `undercover--report-file-path'.
@@ -434,10 +443,14 @@ Return wildcards."
 (defun undercover--setup (configuration)
   "Enable test coverage for files matched by CONFIGURATION."
   (when (undercover--coverage-enabled-p)
-    (undercover--set-edebug-handlers)
-    (undercover-report-on-kill)
-    (let ((wildcards (undercover--set-options configuration)))
-      (undercover--edebug-files (undercover--wildcards-to-files wildcards)))))
+    (let ((env-configuration (undercover--env-configuration))
+          (default-configuration '("*.el")))
+      (undercover--set-edebug-handlers)
+      (undercover-report-on-kill)
+      (let ((wildcards (undercover--set-options
+                        (or (append configuration env-configuration)
+                            default-configuration))))
+        (undercover--edebug-files (undercover--wildcards-to-files wildcards))))))
 
 ;;;###autoload
 (defmacro undercover (&rest configuration)

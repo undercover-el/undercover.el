@@ -59,3 +59,13 @@ Check out [combined usage example](https://github.com/sviridov/undercover.el-com
   ```lisp
   (undercover "*.el" (:report-file "/tmp/local-report.json") (:send-report nil))
   ```
+
+- Set `UNDERCOVER_CONFIG` if you want to configure `undercover.el` via environment variables:
+
+  ```lisp
+  (when (require 'undercover nil t) (undercover))
+  ```
+
+  ```sh
+  $ UNDERCOVER_CONFIG='("*.el" (:exclude "awesome-examples.el"))' cask exec ert-runner
+  ```
