@@ -414,10 +414,12 @@ Values of that hash are number of covers."
 (defun undercover-report (&optional report-type)
   "Create and submit (if needed) test coverage report based on REPORT-TYPE.
 Posible values of REPORT-TYPE: coveralls."
-  (when undercover--files
+  (if undercover--files
     (case (or report-type (undercover--determine-report-type))
       (coveralls (undercover--coveralls-report))
-      (t (error "Unsupported report-type")))))
+      (t (error "Unsupported report-type")))
+    (message
+     "UNDERCOVER: No coverage information. Make sure that your files are not compiled?")))
 
 (defun undercover--env-configuration ()
   "Read configuration from UNDERCOVER_CONFIG."
