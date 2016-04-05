@@ -9,7 +9,7 @@ Few important notes about `undercover.el`:
 
 - it assumes a certain development cycle of your package (using [Cask](https://github.com/cask/cask), [Travis CI](https://travis-ci.org/) and [Coveralls](https://coveralls.io/));
 - it doesn't support test coverage for byte-compiled files;
-- it based on `edebug` and can have some issues with macros coverage.
+- it based on `edebug` and can have some issues with macros coverage. It doesn't support [Circular Objects](http://www.gnu.org/software/emacs/manual/html_node/elisp/Circular-Objects.html).
 
 Check out [combined usage example](https://github.com/sviridov/undercover.el-combined-usage-example) and [buttercup integration example](https://github.com/sviridov/undercover.el-buttercup-integration-example) for more information.
 
