@@ -1,9 +1,10 @@
 ;;; undercover.el --- Test coverage library for Emacs -*- lexical-binding: t -*-
 
-;; Copyright (c) 2014 Sviridov Alexander
+;; Copyright (c) 2014, 2016 Sviridov Alexander
 
 ;; Author: Sviridov Alexander <sviridov.vmi@gmail.com>
 ;; URL: https://github.com/sviridov/undercover.el
+;; Package-Version: 20160329.737
 ;; Created: Sat Sep 27 2014
 ;; Keywords: lisp, tests, coverage, tools
 ;; Version: 0.6.0
@@ -32,6 +33,9 @@
 
 (defvar undercover--report-file-path "/tmp/undercover_coveralls_report"
   "Path to save coveralls.io report.")
+
+(defvar undercover--report-type nil
+  "Type of code coverage report.")
 
 (defvar undercover--files nil
   "List of files for test coverage check.")
@@ -232,7 +236,12 @@ Values of that hash are number of covers."
 
 (defun undercover--determine-report-type ()
   "Automatic report-type determination."
-  (and (undercover--under-ci-p) 'coveralls))
+  (cond ((eq 'coveralls undercover--report-type)
+         'coveralls)
+        ((eq 'text undercover--report-type)
+         'text)
+        (t 'coveralls)))
+;;  (and (undercover--under-ci-p) 'coveralls))
 
 (defun undercover--get-git-info (&rest args)
   "Execute Git with ARGS, returning the first line of its output."
@@ -386,13 +395,47 @@ Values of that hash are number of covers."
     (shut-up
      (shell-command
       (format "curl -v -include --form json_file=@%s %s" undercover--report-file-path coveralls-url)))
-    (message "Sending: OK")))
+    (message "Sending: ----------> OK")))
 
 (defun undercover--coveralls-report ()
   "Create and submit test coverage report to coveralls.io."
   (undercover--save-coveralls-report (undercover--create-coveralls-report))
   (when undercover--send-report
     (undercover--send-coveralls-report)))
+
+
+;; ------------
+;; Text report
+;; ------------
+
+
+(defun undercover--create-text-report ()
+  "Create test coverage report for text display."
+  (undercover--collect-files-coverage undercover--files)
+  (let ((report (make-hash-table :test 'equal)))
+    (maphash (lambda (key val)
+               ;; (message "> %s" key)
+               (let ((nb 0)
+                     (covered 0))
+                 (maphash (lambda (k v)
+                            ;;(message "--> %s %s" k v)
+                            (when (> v 0)
+                              (setq covered (+ 1 covered)))
+                            (setq nb (+ 1 nb))
+                            )
+                          val)
+                 (message "%s : Percent %s%% [Relevant: %s Covered: %s Missed: %s]"
+                          (file-name-base key)
+                          (truncate (* (/ (float covered) (float nb)) (float 100)))
+                          nb covered (- nb covered))
+                 ))
+             undercover--files-coverage-statistics)))
+
+(defun undercover--text-report ()
+  "Create and display test coverage."
+  (message "== Code coverage text report ==\n")
+  (undercover--create-text-report))
+
 
 ;; `ert-runner' related functions:
 
@@ -417,6 +460,7 @@ Posible values of REPORT-TYPE: coveralls."
   (if undercover--files
     (case (or report-type (undercover--determine-report-type))
       (coveralls (undercover--coveralls-report))
+      (text (undercover--text-report))
       (t (error "Unsupported report-type")))
     (message
      "UNDERCOVER: No coverage information. Make sure that your files are not compiled?")))
@@ -440,6 +484,7 @@ Return wildcards."
       (case (car-safe option)
         (:report-file (setq undercover--report-file-path (cadr option)))
         (:send-report (setq undercover--send-report (cadr option)))
+        (:report-type (setq undercover--report-type (cadr option)))
         (otherwise (error "Unsupported option: %s" option))))))
 
 (defun undercover--setup (configuration)
