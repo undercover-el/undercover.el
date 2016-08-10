@@ -485,6 +485,30 @@ Values of that hash are number of covers."
   "Create test coverage report in SimpleCov format."
   (undercover--save-simplecov-report (undercover--create-simplecov-report)))
 
+;; Simple text report:
+
+(defun undercover--create-text-report ()
+  "Print test coverage report for text display."
+  (undercover--collect-files-coverage undercover--files)
+  (maphash (lambda (file-name file-coverage)
+             (let ((lines-relevant 0)
+                   (lines-covered 0))
+               (maphash (lambda (_line-number line-hits)
+                          (setq lines-relevant (+ 1 lines-relevant))
+                          (when (> line-hits 0)
+                            (setq lines-covered (+ 1 lines-covered))))
+                        file-coverage)
+               (message "%s : Percent %s%% [Relevant: %s Covered: %s Missed: %s]"
+                        (file-name-base file-name)
+                        (truncate (* (/ (float lines-covered) (float lines-relevant)) 100))
+                        lines-relevant lines-covered (- lines-relevant lines-covered))))
+           undercover--files-coverage-statistics))
+
+(defun undercover--text-report ()
+  "Create and display test coverage."
+  (message "== Code coverage text report ==\n")
+  (undercover--create-text-report))
+
 ;; `ert-runner' related functions:
 
 (defun undercover-safe-report ()
@@ -509,6 +533,7 @@ Posible values of REPORT-FORMAT: coveralls."
     (case (or report-format undercover--report-format (undercover--determine-report-format))
       (coveralls (undercover--coveralls-report))
       (simplecov (undercover--simplecov-report))
+      (text (undercover--text-report))
       (t (error "Unsupported report-format")))
     (message
      "UNDERCOVER: No coverage information. Make sure that your files are not compiled?")))
