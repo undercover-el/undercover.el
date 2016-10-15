@@ -385,7 +385,7 @@ Values of that hash are number of covers."
     (message "Sending: report to coveralls.io")
     (shut-up
      (shell-command
-      (format "curl -v -include --form json_file=@%s %s" undercover--report-file-path coveralls-url)))
+      (format "curl -v --include --form json_file=@%s %s" undercover--report-file-path coveralls-url)))
     (message "Sending: OK")))
 
 (defun undercover--coveralls-report ()
