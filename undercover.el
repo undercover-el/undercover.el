@@ -1,4 +1,4 @@
-;;; undercover.el --- Test coverage library for Emacs -*- lexical-binding: t -*-
+;;; undercover.el --- Test coverage library for Emacs Lisp -*- lexical-binding: t -*-
 
 ;; Copyright (c) 2014 Sviridov Alexander
 
