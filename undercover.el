@@ -1,6 +1,6 @@
 ;;; undercover.el --- Test coverage library for Emacs -*- lexical-binding: t -*-
 
-;; Copyright (c) 2014, 2016 Sviridov Alexander
+;; Copyright (c) 2014, 2016, 2017 Sviridov Alexander
 
 ;; Author: Sviridov Alexander <sviridov.vmi@gmail.com>
 ;; URL: https://github.com/sviridov/undercover.el
@@ -404,21 +404,14 @@ Values of that hash are number of covers."
     (undercover--send-coveralls-report)))
 
 
-;; ------------
-;; Text report
-;; ------------
-
-
 (defun undercover--create-text-report ()
   "Create test coverage report for text display."
   (undercover--collect-files-coverage undercover--files)
   (let ((report (make-hash-table :test 'equal)))
     (maphash (lambda (key val)
-               ;; (message "> %s" key)
                (let ((nb 0)
                      (covered 0))
                  (maphash (lambda (k v)
-                            ;;(message "--> %s %s" k v)
                             (when (> v 0)
                               (setq covered (+ 1 covered)))
                             (setq nb (+ 1 nb))
