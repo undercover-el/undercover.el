@@ -234,14 +234,15 @@ Values of that hash are number of covers."
 
 ;;; Reports related functions:
 
+(defvar undercover--report-type 'coveralls
+  "Type of code coverage report.")
+
 (defun undercover--determine-report-type ()
-  "Automatic report-type determination."
-  (cond ((eq 'coveralls undercover--report-type)
+   "Automatic report-type determination."
+  (cond ((and (eq 'coveralls undercover--report-type) (undercover--under-ci-p))
          'coveralls)
         ((eq 'text undercover--report-type)
-         'text)
-        (t 'coveralls)))
-;;  (and (undercover--under-ci-p) 'coveralls))
+         'text)))
 
 (defun undercover--get-git-info (&rest args)
   "Execute Git with ARGS, returning the first line of its output."
