@@ -63,7 +63,7 @@ Check out [combined usage example](https://github.com/sviridov/undercover.el-com
 - Set `UNDERCOVER_FORCE` environment variable if you want to do coverage calculation locally:
 
   ```sh
-  UNDERCOVER_FORCE=true cask exec ert-runner
+  $ UNDERCOVER_FORCE=true cask exec ert-runner
   ```
 
 - Set `UNDERCOVER_CONFIG` if you want to configure `undercover.el` via environment variables:
@@ -75,10 +75,10 @@ Check out [combined usage example](https://github.com/sviridov/undercover.el-com
   ```sh
   $ UNDERCOVER_CONFIG='("*.el" (:exclude "awesome-examples.el"))' cask exec ert-runner
   ```
-  
+
 - If you get `"UNDERCOVER: No coverage information [...]"`, make sure of the following:
     1. remove byte-compiled files (`*.elc`) of your project
     2. load and configure undercover before your project files (see above)
     3. make sure ert-runner does not load your project files (your project's `.ert-runner` should use `-L` instead of `-l` for files you want to measure coverage of)
-    
+
 - If you want to measure code coverage locally, you can set `TRAVIS=true` in the shell environment or `(setq undercover-force-coverage t)` in emacs.
