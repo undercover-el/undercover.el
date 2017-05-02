@@ -60,6 +60,12 @@ Check out [combined usage example](https://github.com/sviridov/undercover.el-com
   (undercover "*.el" (:report-file "/tmp/local-report.json") (:send-report nil))
   ```
 
+- Set `UNDERCOVER_FORCE` environment variable if you want to do coverage calculation locally:
+
+  ```sh
+  UNDERCOVER_FORCE=true cask exec ert-runner
+  ```
+
 - Set `UNDERCOVER_CONFIG` if you want to configure `undercover.el` via environment variables:
 
   ```lisp

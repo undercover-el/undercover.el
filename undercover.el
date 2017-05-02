@@ -6,7 +6,7 @@
 ;; URL: https://github.com/sviridov/undercover.el
 ;; Created: Sat Sep 27 2014
 ;; Keywords: lisp, tests, coverage, tools
-;; Version: 0.6.0
+;; Version: 0.6.1
 ;; Package-Requires: ((emacs "24") (dash "2.0.0") (shut-up "0.3.2"))
 
 ;;; Commentary:
@@ -22,7 +22,7 @@
 (require 'dash)
 (require 'shut-up)
 
-(defconst undercover-version "0.6.0")
+(defconst undercover-version "0.6.1")
 
 (defvar undercover-force-coverage nil
   "If nil, test coverage check will be done only under continuous integration service.")
@@ -226,7 +226,10 @@ Values of that hash are number of covers."
 
 (defun undercover--under-ci-p ()
   "Check that `undercover' running under continuous integration service."
-  (or (undercover--coveralls-repo-token) (undercover--under-travic-ci-p)))
+  (or
+   (undercover--coveralls-repo-token)
+   (undercover--under-travic-ci-p)
+   (getenv "UNDERCOVER_FORCE")))
 
 ;;; Reports related functions:
 
@@ -364,7 +367,8 @@ Values of that hash are number of covers."
       (undercover--update-coveralls-report-with-repo-token report)
       (undercover--try-update-coveralls-report-with-shippable report))
      ((undercover--under-travic-ci-p) (undercover--update-coveralls-report-with-travis-ci report))
-     (t (error "Unsupported coveralls.io report")))
+     (t (unless (getenv "UNDERCOVER_FORCE")
+          (error "Unsupported coveralls.io report"))))
     (undercover--update-coveralls-report-with-git report)
     (undercover--fill-coveralls-report report)
     (undercover--merge-coveralls-reports report)
