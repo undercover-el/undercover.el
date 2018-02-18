@@ -444,6 +444,11 @@ Return wildcards."
       (case (car-safe option)
         (:report-file (setq undercover--report-file-path (cadr option)))
         (:send-report (setq undercover--send-report (cadr option)))
+        (:report-type (case (cadr option)
+                        (:coveralls)
+                        (:codecov (setq undercover--report-file-path "coverage-final.json")
+                                  (setq undercover--send-report nil))
+                        (otherwise (error "Unsupported report-type: %s" (cadr option)))))
         (otherwise (error "Unsupported option: %s" option))))))
 
 (defun undercover--setup (configuration)

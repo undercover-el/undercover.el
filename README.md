@@ -7,7 +7,7 @@ A test coverage library for [Emacs Lisp](http://www.gnu.org/software/emacs/manua
 
 Few important notes about `undercover.el`:
 
-- it assumes a certain development cycle of your package (using [Cask](https://github.com/cask/cask), [Travis CI](https://travis-ci.org/) and [Coveralls](https://coveralls.io/));
+- it assumes a certain development cycle of your package (using [Cask](https://github.com/cask/cask), [Travis CI](https://travis-ci.org/), and [Coveralls](https://coveralls.io/)), [Codecov](https://codecov.io/), or compatible;
 - it doesn't support test coverage for byte-compiled files;
 - it based on `edebug` and can have some issues with macros coverage. It doesn't support [Circular Objects](http://www.gnu.org/software/emacs/manual/html_node/elisp/Circular-Objects.html).
 
@@ -36,7 +36,16 @@ Check out [combined usage example](https://github.com/sviridov/undercover.el-com
   (require 'awesome-package)
   ```
 
-- Add your repository to [Coveralls](https://coveralls.io/).
+- Add your repository to [Coveralls](https://coveralls.io/) or [Codecov](https://codecov.io/).
+
+- For coverage services other than [Coveralls](https://coveralls.io/), add the relevant command to `.travis.yml`. For example:
+
+``` yaml
+after_success:
+  # Upload coverage
+  - bash <(curl -s https://codecov.io/bash)
+
+```
 
 ## Configuration
 
@@ -46,6 +55,12 @@ Check out [combined usage example](https://github.com/sviridov/undercover.el-com
   $ COVERALLS_REPO_TOKEN=<your-coveralls-repo-token> cask exec ert-runner
   ```
 
+- Set `report-type` if not using [Coveralls](https://coveralls.io/):
+
+  ```lisp
+  (undercover "*.el" (:report-type :codecov))
+  ```
+  
 - Set `report-file` option if you want to change report location:
 
   ```lisp
