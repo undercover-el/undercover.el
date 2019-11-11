@@ -109,3 +109,23 @@ after_success:
 
 - To enable Coveralls parallel builds, set `COVERALLS_PARALLEL` in the shell environment,
   and configure the web hook as [described in the Coveralls documentation](https://docs.coveralls.io/parallel-build-webhook).
+
+## Viewing coverage in Emacs
+
+1. Install [coverage-mode](https://github.com/Bogdanp/coverage-mode)
+
+2. Create the `coverage` directory in your project root
+
+3. Configure `undercover.el` as follows:
+
+  ```lisp
+  (require 'undercover)
+  (setq undercover-force-coverage t)
+  (undercover "*.el" (:report-file "coverage/.resultset.json")
+                     (:report-format 'simplecov)
+                     (:send-report nil))
+  ```
+
+4. Run your tests
+
+5. Open a source file, and enable `coverage-mode`.
