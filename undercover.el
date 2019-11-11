@@ -239,8 +239,8 @@ Values of that hash are number of covers."
 
 ;;; Reports related functions:
 
-(defun undercover--determine-report-type ()
-  "Automatic report-type determination."
+(defun undercover--determine-report-format ()
+  "Automatic report-format determination."
   (and (undercover--under-ci-p) 'coveralls))
 
 (defun undercover--get-git-info (&rest args)
@@ -422,13 +422,13 @@ Values of that hash are number of covers."
   "Check that `undercover' is enabled."
   (or undercover-force-coverage (undercover--under-ci-p)))
 
-(defun undercover-report (&optional report-type)
-  "Create and submit (if needed) test coverage report based on REPORT-TYPE.
-Posible values of REPORT-TYPE: coveralls."
+(defun undercover-report (&optional report-format)
+  "Create and submit (if needed) test coverage report based on REPORT-FORMAT.
+Posible values of REPORT-FORMAT: coveralls."
   (if undercover--files
-    (case (or report-type (undercover--determine-report-type))
+    (case (or report-format (undercover--determine-report-format))
       (coveralls (undercover--coveralls-report))
-      (t (error "Unsupported report-type")))
+      (t (error "Unsupported report-format")))
     (message
      "UNDERCOVER: No coverage information. Make sure that your files are not compiled?")))
 

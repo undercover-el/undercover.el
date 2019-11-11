@@ -71,7 +71,7 @@
 
 (ert-deftest test-6/check-environment-variables ()
   (with-env-variable "TRAVIS" "true"
-    (should (eq 'coveralls (undercover--determine-report-type)))))
+    (should (eq 'coveralls (undercover--determine-report-format)))))
 
 (ert-deftest test-7/check-coveralls-report ()
   (with-env-variable "TRAVIS" "true"
