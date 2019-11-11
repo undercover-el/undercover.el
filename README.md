@@ -76,6 +76,14 @@ after_success:
   (undercover "*.el" (:report-file "/tmp/local-report.json") (:send-report nil))
   ```
 
+- Set `report-format` to use a different format for the report file:
+
+  ```lisp
+  (undercover "*.el" (:report-file "coverage/.resultset.json")
+                     (:report-format 'simplecov)
+                     (:send-report nil))
+  ```
+
 - Set `UNDERCOVER_FORCE` environment variable if you want to do coverage calculation locally:
 
   ```sh
