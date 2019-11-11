@@ -402,7 +402,7 @@ Values of that hash are number of covers."
 
 (defun undercover-safe-report ()
   "Version of `undercover-report' that ignore errors."
-  (ignore-errors
+  (with-demoted-errors
     (undercover-report)))
 
 (defun undercover-report-on-kill ()
