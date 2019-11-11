@@ -33,6 +33,11 @@ continuous integration service.
 Can also be set through the environment, by defining UNDERCOVER_FORCE.")
 (setq undercover-force-coverage (getenv "UNDERCOVER_FORCE"))
 
+(defvar undercover--report-format nil
+  "Indicates the format of the report file and CI service to submit to.
+
+If nil, autodetect from CI environment.")
+
 (defvar undercover--send-report t
   "If not nil, test coverage report will be sent to coveralls.io.")
 
@@ -426,7 +431,7 @@ Values of that hash are number of covers."
   "Create and submit (if needed) test coverage report based on REPORT-FORMAT.
 Posible values of REPORT-FORMAT: coveralls."
   (if undercover--files
-    (case (or report-format (undercover--determine-report-format))
+    (case (or report-format undercover--report-format (undercover--determine-report-format))
       (coveralls (undercover--coveralls-report))
       (t (error "Unsupported report-format")))
     (message
@@ -450,6 +455,7 @@ Return wildcards."
     (dolist (option options wildcards)
       (case (car-safe option)
         (:report-file (setq undercover--report-file-path (cadr option)))
+        (:report-format (setq undercover--report-format (cadr option)))
         (:send-report (setq undercover--send-report (cadr option)))
         ;; Note: this option is obsolete and intentionally undocumented.
         ;; Please use :report-file and :send-report explicitly instead.
