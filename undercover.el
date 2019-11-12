@@ -323,7 +323,8 @@ Values of that hash are number of covers."
 (defun undercover--fill-coveralls-report (report)
   "Fill test coverage REPORT for coveralls.io."
   (undercover--fill-hash-table report
-    "source_files" (mapcar #'undercover--coveralls-file-report undercover--files)))
+    "source_files" (mapcar #'undercover--coveralls-file-report undercover--files)
+    "parallel" (if (getenv "COVERALLS_PARALLEL") t json-false)))
 
 (defun undercover--merge-coveralls-report-file-lines-coverage (old-coverage new-coverage)
   "Merge test coverage for lines from OLD-COVERAGE and NEW-COVERAGE."
