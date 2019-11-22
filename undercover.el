@@ -33,6 +33,11 @@ continuous integration service.
 Can also be set through the environment, by defining UNDERCOVER_FORCE.")
 (setq undercover-force-coverage (getenv "UNDERCOVER_FORCE"))
 
+(defvar undercover--report-format nil
+  "Indicates the format of the report file and CI service to submit to.
+
+If nil, autodetect from CI environment.")
+
 (defvar undercover--send-report t
   "If not nil, test coverage report will be sent to coveralls.io.")
 
@@ -239,8 +244,8 @@ Values of that hash are number of covers."
 
 ;;; Reports related functions:
 
-(defun undercover--determine-report-type ()
-  "Automatic report-type determination."
+(defun undercover--determine-report-format ()
+  "Automatic report-format determination."
   (and (undercover--under-ci-p) 'coveralls))
 
 (defun undercover--get-git-info (&rest args)
@@ -405,6 +410,81 @@ Values of that hash are number of covers."
   (when undercover--send-report
     (undercover--send-coveralls-report)))
 
+;; SimpleCov report:
+
+(defconst undercover--simplecov-report-name "undercover.el"
+  "The name of the generated result in the SimpleCov result set report.")
+
+(defalias 'undercover--simplecov-file-coverage-report
+  #'undercover--coveralls-file-coverage-report
+  "Translate file coverage STATISTICS into SimpleCov format (same as coveralls.io).")
+
+(defalias 'undercover--merge-simplecov-report-file-lines-coverage
+  #'undercover--merge-coveralls-report-file-lines-coverage)
+
+(defun undercover--simplecov-file-report (file)
+  "Create part of SimpleCov report for FILE."
+  (save-excursion
+    (find-file file)
+    (list file (undercover--simplecov-file-coverage-report
+                (gethash file undercover--files-coverage-statistics)))))
+
+(defun undercover--fill-simplecov-report (report)
+  "Fill SimpleCov test coverage REPORT."
+  (undercover--fill-hash-table report
+    undercover--simplecov-report-name
+    (undercover--make-hash-table
+     "timestamp" (truncate (time-to-seconds))
+     "coverage" (apply #'undercover--make-hash-table
+                       (apply #'append
+                              (mapcar #'undercover--simplecov-file-report
+                                      undercover--files))))))
+
+(defun undercover--merge-simplecov-report-file-coverage (target-coverage file-name source-file-coverage)
+  "Merge into TARGET-COVERAGE the FILE-NAME's coverage data SOURCE-FILE-COVERAGE."
+  (let ((target-file-coverage (gethash file-name target-coverage)))
+    (puthash file-name
+             (if target-file-coverage
+                 (undercover--merge-simplecov-report-file-lines-coverage
+                  target-file-coverage
+                  source-file-coverage)
+               source-file-coverage)
+             target-coverage)))
+
+(defun undercover--merge-simplecov-reports (new-report)
+  "Merge test coverage NEW-REPORT with existing from `undercover--report-file-path'."
+  (when (file-readable-p undercover--report-file-path)
+    (let* ((json-object-type 'hash-table)
+           (json-array-type 'list)
+           (old-report (json-read-file undercover--report-file-path))
+           (old-coverage
+            (gethash "coverage" (gethash undercover--simplecov-report-name old-report)))
+           (new-coverage
+            (gethash "coverage" (gethash undercover--simplecov-report-name new-report))))
+      (maphash
+       (lambda (name old-file-coverage)
+         (undercover--merge-simplecov-report-file-coverage new-coverage name old-file-coverage))
+       old-coverage)))
+  new-report)
+
+(defun undercover--create-simplecov-report ()
+  "Create SimpleCov test coverage report."
+  (undercover--collect-files-coverage undercover--files)
+  (let ((report (make-hash-table :test 'equal)))
+    (undercover--fill-simplecov-report report)
+    (undercover--merge-simplecov-reports report)
+    (json-encode report)))
+
+(defun undercover--save-simplecov-report (json-report)
+  "Save JSON-REPORT to `undercover--report-file-path'."
+  (with-temp-buffer
+    (insert json-report)
+    (write-region nil nil undercover--report-file-path)))
+
+(defun undercover--simplecov-report ()
+  "Create test coverage report in SimpleCov format."
+  (undercover--save-simplecov-report (undercover--create-simplecov-report)))
+
 ;; `ert-runner' related functions:
 
 (defun undercover-safe-report ()
@@ -422,13 +502,14 @@ Values of that hash are number of covers."
   "Check that `undercover' is enabled."
   (or undercover-force-coverage (undercover--under-ci-p)))
 
-(defun undercover-report (&optional report-type)
-  "Create and submit (if needed) test coverage report based on REPORT-TYPE.
-Posible values of REPORT-TYPE: coveralls."
+(defun undercover-report (&optional report-format)
+  "Create and submit (if needed) test coverage report based on REPORT-FORMAT.
+Posible values of REPORT-FORMAT: coveralls."
   (if undercover--files
-    (case (or report-type (undercover--determine-report-type))
+    (case (or report-format undercover--report-format (undercover--determine-report-format))
       (coveralls (undercover--coveralls-report))
-      (t (error "Unsupported report-type")))
+      (simplecov (undercover--simplecov-report))
+      (t (error "Unsupported report-format")))
     (message
      "UNDERCOVER: No coverage information. Make sure that your files are not compiled?")))
 
@@ -450,6 +531,7 @@ Return wildcards."
     (dolist (option options wildcards)
       (case (car-safe option)
         (:report-file (setq undercover--report-file-path (cadr option)))
+        (:report-format (setq undercover--report-format (cadr option)))
         (:send-report (setq undercover--send-report (cadr option)))
         ;; Note: this option is obsolete and intentionally undocumented.
         ;; Please use :report-file and :send-report explicitly instead.

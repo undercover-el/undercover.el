@@ -76,6 +76,14 @@ after_success:
   (undercover "*.el" (:report-file "/tmp/local-report.json") (:send-report nil))
   ```
 
+- Set `report-format` to use a different format for the report file:
+
+  ```lisp
+  (undercover "*.el" (:report-file "coverage/.resultset.json")
+                     (:report-format 'simplecov)
+                     (:send-report nil))
+  ```
+
 - Set `UNDERCOVER_FORCE` environment variable if you want to do coverage calculation locally:
 
   ```sh
@@ -101,3 +109,23 @@ after_success:
 
 - To enable Coveralls parallel builds, set `COVERALLS_PARALLEL` in the shell environment,
   and configure the web hook as [described in the Coveralls documentation](https://docs.coveralls.io/parallel-build-webhook).
+
+## Viewing coverage in Emacs
+
+1. Install [coverage-mode](https://github.com/Bogdanp/coverage-mode)
+
+2. Create the `coverage` directory in your project root
+
+3. Configure `undercover.el` as follows:
+
+  ```lisp
+  (require 'undercover)
+  (setq undercover-force-coverage t)
+  (undercover "*.el" (:report-file "coverage/.resultset.json")
+                     (:report-format 'simplecov)
+                     (:send-report nil))
+  ```
+
+4. Run your tests
+
+5. Open a source file, and enable `coverage-mode`.

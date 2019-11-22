@@ -71,7 +71,21 @@
 
 (ert-deftest test-6/check-environment-variables ()
   (with-env-variable "TRAVIS" "true"
-    (should (eq 'coveralls (undercover--determine-report-type)))))
+    (should (eq 'coveralls (undercover--determine-report-format)))))
+
+(defun coveralls--check-lines-statistics (multiplier example-library-statistics)
+  ;; distance statistics
+  (dolist (line '(14 15 16 17 18 19))
+    (should (= (* multiplier 2) (nth line example-library-statistics))))
+
+  (should-not (nth 13 example-library-statistics))
+  (should-not (nth 20 example-library-statistics))
+
+  ;; fib statistics
+  (should (= (* multiplier 27) (nth 23 example-library-statistics)))
+  (should (= (* multiplier 27) (nth 24 example-library-statistics)))
+  (should (= (* multiplier 21) (nth 25 example-library-statistics)))
+  (should (= (* multiplier 12) (nth 26 example-library-statistics))))
 
 (ert-deftest test-7/check-coveralls-report ()
   (with-env-variable "TRAVIS" "true"
@@ -83,39 +97,43 @@
          (json-array-type 'list)
          (report (json-read-file first-example-library-report-file)))
 
-    (cl-flet ((check-lines-statistics (multiplier example-library-statistics)
-                ;; distance statistics
-                (dolist (line '(14 15 16 17 18 19))
-                  (should (= (* multiplier 2) (nth line example-library-statistics))))
+    (should (string-equal "travis-ci" (gethash "service_name" report)))
 
-                (should-not (nth 13 example-library-statistics))
-                (should-not (nth 20 example-library-statistics))
+    (let ((file-report (car (gethash "source_files" report))))
+      (should (string-equal "test/first-example-library/first-example-library.el"
+                            (gethash "name" file-report)))
 
-                ;; fib statistics
-                (should (= (* multiplier 27) (nth 23 example-library-statistics)))
-                (should (= (* multiplier 27) (nth 24 example-library-statistics)))
-                (should (= (* multiplier 21) (nth 25 example-library-statistics)))
-                (should (= (* multiplier 12) (nth 26 example-library-statistics)))))
+      (should (string-equal (save-excursion
+                              (find-file (file-truename "test/first-example-library/first-example-library.el"))
+                              (buffer-substring-no-properties (point-min) (point-max)))
 
-      (should (string-equal "travis-ci" (gethash "service_name" report)))
+                            (gethash "source" file-report)))
 
-      (let ((file-report (car (gethash "source_files" report))))
-        (should (string-equal "test/first-example-library/first-example-library.el"
-                              (gethash "name" file-report)))
-
-        (should (string-equal (save-excursion
-                                (find-file (file-truename "test/first-example-library/first-example-library.el"))
-                                (buffer-substring-no-properties (point-min) (point-max)))
-
-                              (gethash "source" file-report)))
-
-        (check-lines-statistics 1 (gethash "coverage" file-report))
-        (undercover--merge-coveralls-reports report)
-        (check-lines-statistics 2 (gethash "coverage" file-report))))))
+      (coveralls--check-lines-statistics 1 (gethash "coverage" file-report))
+      (undercover--merge-coveralls-reports report)
+      (coveralls--check-lines-statistics 2 (gethash "coverage" file-report)))))
 
 (ert-deftest test-8/should-error ()
   (with-env-variable "TRAVIS" nil
     (should-error (undercover-report))
     (should-error (undercover--create-coveralls-report))))
+
+(ert-deftest test-9/check-simplecov-report ()
+  ;; Don't attempt to merge with report in another format
+  (when (file-readable-p first-example-library-report-file)
+    (delete-file first-example-library-report-file))
+  (undercover-report 'simplecov)
+
+  (let* ((json-object-type 'hash-table)
+         (json-array-type 'list)
+         (reportset (json-read-file first-example-library-report-file)))
+
+    (let* ((report (gethash "undercover.el" reportset))
+           (coverage (gethash "coverage" report))
+           (file-key (file-truename "test/first-example-library/first-example-library.el")))
+
+      (coveralls--check-lines-statistics 1 (gethash file-key coverage))
+      (undercover--merge-simplecov-reports reportset)
+      (coveralls--check-lines-statistics 2 (gethash file-key coverage)))))
 
 ;;; first-example-library-test.el ends here
