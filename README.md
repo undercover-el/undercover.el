@@ -55,10 +55,11 @@ after_success:
   $ COVERALLS_REPO_TOKEN=<your-coveralls-repo-token> cask exec ert-runner
   ```
 
-- Set `report-type` if not using [Coveralls](https://coveralls.io/):
+- If not using [Coveralls](https://coveralls.io/), compatible services (such as CodeCov) can be used by saving the report and uploading it from your pipeline:
 
   ```lisp
-  (undercover "*.el" (:report-type :codecov))
+  (undercover "*.el" (:report-file "coverage-final.json")
+                     (:send-report nil))
   ```
   
 - Set `report-file` option if you want to change report location:

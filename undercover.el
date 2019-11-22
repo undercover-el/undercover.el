@@ -450,6 +450,8 @@ Return wildcards."
       (case (car-safe option)
         (:report-file (setq undercover--report-file-path (cadr option)))
         (:send-report (setq undercover--send-report (cadr option)))
+        ;; Note: this option is obsolete and intentionally undocumented.
+        ;; Please use :report-file and :send-report explicitly instead.
         (:report-type (case (cadr option)
                         (:coveralls)
                         (:codecov (setq undercover--report-file-path "coverage-final.json")
