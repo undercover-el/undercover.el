@@ -25,7 +25,13 @@
 (defconst undercover-version "0.6.1")
 
 (defvar undercover-force-coverage nil
-  "If nil, test coverage check will be done only under continuous integration service.")
+  "Always collect test coverage.
+
+If nil, test coverage will be collected only when running under a
+continuous integration service.
+
+Can also be set through the environment, by defining UNDERCOVER_FORCE.")
+(setq undercover-force-coverage (getenv "UNDERCOVER_FORCE"))
 
 (defvar undercover--send-report t
   "If not nil, test coverage report will be sent to coveralls.io.")
@@ -229,7 +235,7 @@ Values of that hash are number of covers."
   (or
    (undercover--coveralls-repo-token)
    (undercover--under-travic-ci-p)
-   (getenv "UNDERCOVER_FORCE")))
+   undercover-force-coverage))
 
 ;;; Reports related functions:
 
@@ -367,7 +373,7 @@ Values of that hash are number of covers."
       (undercover--update-coveralls-report-with-repo-token report)
       (undercover--try-update-coveralls-report-with-shippable report))
      ((undercover--under-travic-ci-p) (undercover--update-coveralls-report-with-travis-ci report))
-     (t (unless (getenv "UNDERCOVER_FORCE")
+     (t (unless undercover-force-coverage
           (error "Unsupported coveralls.io report"))))
     (undercover--update-coveralls-report-with-git report)
     (undercover--fill-coveralls-report report)
