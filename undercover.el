@@ -110,7 +110,7 @@ Example of WILDCARDS: (\"*.el\" \"subdir/*.el\" (:exclude \"exclude-*.el\"))."
 
 (defun undercover--show-load-file-error (filename load-error)
   (message "UNDERCOVER: Error while loading %s for coverage:" filename)
-  (message "UNDERCOVER: %S %S" (car load-error) (cdr load-error))
+  (message "UNDERCOVER: %s" (error-message-string load-error))
   (message "UNDERCOVER: The problem may be due to edebug failing to parse the file.")
   (message "UNDERCOVER: You can try to narrow down the problem using the following steps:")
   (message "UNDERCOVER: 1. Open %S in an Emacs buffer;" filename)
