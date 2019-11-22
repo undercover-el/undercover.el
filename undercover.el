@@ -440,33 +440,32 @@ Values of that hash are number of covers."
                               (mapcar #'undercover--simplecov-file-report
                                       undercover--files))))))
 
-(defun undercover--merge-simplecov-report-file-coverage (old-coverage file-name new-file-coverage)
-  "Merge into OLD-COVERAGE the FILE-NAME's coverage data NEW-FILE-COVERAGE."
-  (let ((old-file-coverage (gethash file-name old-coverage)))
+(defun undercover--merge-simplecov-report-file-coverage (target-coverage file-name source-file-coverage)
+  "Merge into TARGET-COVERAGE the FILE-NAME's coverage data SOURCE-FILE-COVERAGE."
+  (let ((target-file-coverage (gethash file-name target-coverage)))
     (puthash file-name
-             (if old-file-coverage
+             (if target-file-coverage
                  (undercover--merge-simplecov-report-file-lines-coverage
-                  old-file-coverage
-                  new-file-coverage)
-               new-file-coverage)
-             old-coverage)))
+                  target-file-coverage
+                  source-file-coverage)
+               source-file-coverage)
+             target-coverage)))
 
-(defun undercover--merge-simplecov-reports (report)
-  "Merge test coverage REPORT with existing from `undercover--report-file-path'."
-  (if (file-readable-p undercover--report-file-path)
-      (let* ((json-object-type 'hash-table)
-             (json-array-type 'list)
-             (old-report (json-read-file undercover--report-file-path))
-             (old-coverage
-              (gethash "coverage" (gethash undercover--simplecov-report-name old-report)))
-             (new-coverage
-              (gethash "coverage" (gethash undercover--simplecov-report-name report))))
-        (maphash
-         (lambda (name new-file-coverage)
-           (undercover--merge-simplecov-report-file-coverage old-coverage name new-file-coverage))
-         new-coverage)
-        old-report)
-    report))
+(defun undercover--merge-simplecov-reports (new-report)
+  "Merge test coverage NEW-REPORT with existing from `undercover--report-file-path'."
+  (when (file-readable-p undercover--report-file-path)
+    (let* ((json-object-type 'hash-table)
+           (json-array-type 'list)
+           (old-report (json-read-file undercover--report-file-path))
+           (old-coverage
+            (gethash "coverage" (gethash undercover--simplecov-report-name old-report)))
+           (new-coverage
+            (gethash "coverage" (gethash undercover--simplecov-report-name new-report))))
+      (maphash
+       (lambda (name old-file-coverage)
+         (undercover--merge-simplecov-report-file-coverage new-coverage name old-file-coverage))
+       old-coverage)))
+  new-report)
 
 (defun undercover--create-simplecov-report ()
   "Create SimpleCov test coverage report."
