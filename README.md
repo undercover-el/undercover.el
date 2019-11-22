@@ -1,5 +1,5 @@
 # undercover.el
-[![Coverage Status](https://coveralls.io/repos/sviridov/undercover.el/badge.svg)](https://coveralls.io/r/sviridov/undercover.el?branch=master) [![Build Status](https://travis-ci.org/sviridov/undercover.el.svg)](https://travis-ci.org/sviridov/undercover.el) [![license](http://img.shields.io/badge/license-MIT-brightgreen.svg)](https://github.com/sviridov/undercover.el/blob/master/LICENSE) [![MELPA](http://melpa.org/packages/undercover-badge.svg)](http://melpa.org/#/undercover) [![MELPA stable](http://stable.melpa.org/packages/undercover-badge.svg)](http://stable.melpa.org/#/undercover)
+[![Coverage Status](https://coveralls.io/repos/undercover-el/undercover.el/badge.svg)](https://coveralls.io/r/undercover-el/undercover.el?branch=master) [![Build Status](https://travis-ci.org/undercover-el/undercover.el.svg)](https://travis-ci.org/undercover-el/undercover.el) [![license](http://img.shields.io/badge/license-MIT-brightgreen.svg)](https://github.com/undercover-el/undercover.el/blob/master/LICENSE) [![MELPA](http://melpa.org/packages/undercover-badge.svg)](http://melpa.org/#/undercover) [![MELPA stable](http://stable.melpa.org/packages/undercover-badge.svg)](http://stable.melpa.org/#/undercover)
 
 A test coverage library for [Emacs Lisp](http://www.gnu.org/software/emacs/manual/html_node/elisp/index.html).
 
@@ -11,7 +11,7 @@ Few important notes about `undercover.el`:
 - it doesn't support test coverage for byte-compiled files;
 - it based on `edebug` and can have some issues with macros coverage. It doesn't support [Circular Objects](http://www.gnu.org/software/emacs/manual/html_node/elisp/Circular-Objects.html).
 
-Check out [combined usage example](https://github.com/sviridov/undercover.el-combined-usage-example) and [buttercup integration example](https://github.com/sviridov/undercover.el-buttercup-integration-example) for more information.
+Check out [combined usage example](https://github.com/undercover-el/undercover.el-combined-usage-example) and [buttercup integration example](https://github.com/undercover-el/undercover.el-buttercup-integration-example) for more information.
 
 ## Installation
 
