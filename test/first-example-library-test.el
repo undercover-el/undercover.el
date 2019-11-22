@@ -144,4 +144,16 @@
 first-example-library : Percent 100% [Relevant: 10 Covered: 10 Missed: 0]
 "))))
 
+(ert-deftest test-011/check-text-report-file ()
+  (let* ((undercover--files-coverage-statistics (make-hash-table :test 'equal))
+         (undercover--files (list (file-truename "test/first-example-library/first-example-library.el")))
+         (undercover--report-file-path "/tmp/undercover-text-report.txt"))
+    (undercover-report 'text)
+    (let ((report (with-temp-buffer
+                    (insert-file-contents undercover--report-file-path)
+                    (buffer-substring-no-properties (point-min) (point-max)))))
+      (should (string-equal report "== Code coverage text report ==
+first-example-library : Percent 100% [Relevant: 10 Covered: 10 Missed: 0]
+")))))
+
 ;;; first-example-library-test.el ends here
