@@ -109,9 +109,17 @@ Example of WILDCARDS: (\"*.el\" \"subdir/*.el\" (:exclude \"exclude-*.el\"))."
       (switch-to-buffer (current-buffer)))))
 
 (defun undercover--show-load-file-error (filename load-error)
-  (message "UNDERCOVER: error while covering %s:" filename)
+  (message "UNDERCOVER: Error while loading %s for coverage:" filename)
   (message "UNDERCOVER: %S %S" (car load-error) (cdr load-error))
-  (message "UNDERCOVER: please open a new issue at https://github.com/sviridov/undercover.el/issues"))
+  (message "UNDERCOVER: The problem may be due to edebug failing to parse the file.")
+  (message "UNDERCOVER: You can try to narrow down the problem using the following steps:")
+  (message "UNDERCOVER: 1. Open %S in an Emacs buffer;" filename)
+  (message "UNDERCOVER: 2. Run M-: `%s';" "(require 'edebug)")
+  (message "UNDERCOVER: 3. Run M-x `edebug-all-defs';")
+  (message "UNDERCOVER: 4. Run M-x `toggle-debug-on-error'.")
+  (message "UNDERCOVER: 5. Run M-x `eval-buffer';")
+  (message "UNDERCOVER: 6. In the *Backtrace* buffer, find a numeric position,")
+  (message "UNDERCOVER:    then M-x `goto-char' to it."))
 
 (defun undercover-file-handler (operation &rest args)
   "Handle `load' OPERATION.  Ignore all ARGS except first."
