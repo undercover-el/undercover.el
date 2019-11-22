@@ -118,4 +118,36 @@
     (should-error (undercover-report))
     (should-error (undercover--create-coveralls-report))))
 
+(ert-deftest test-9/check-simplecov-report ()
+  ;; Don't attempt to merge with report in another format
+  (when (file-readable-p first-example-library-report-file)
+    (delete-file first-example-library-report-file))
+  (undercover-report 'simplecov)
+
+  (let* ((json-object-type 'hash-table)
+         (json-array-type 'list)
+         (reportset (json-read-file first-example-library-report-file)))
+
+    (cl-flet ((check-lines-statistics (multiplier example-library-statistics)
+                ;; distance statistics
+                (dolist (line '(14 15 16 17 18 19))
+                  (should (= (* multiplier 2) (nth line example-library-statistics))))
+
+                (should-not (nth 13 example-library-statistics))
+                (should-not (nth 20 example-library-statistics))
+
+                ;; fib statistics
+                (should (= (* multiplier 27) (nth 23 example-library-statistics)))
+                (should (= (* multiplier 27) (nth 24 example-library-statistics)))
+                (should (= (* multiplier 21) (nth 25 example-library-statistics)))
+                (should (= (* multiplier 12) (nth 26 example-library-statistics)))))
+
+      (let* ((report (gethash "undercover.el" reportset))
+             (coverage (gethash "coverage" report))
+             (file-key (file-truename "test/first-example-library/first-example-library.el")))
+
+        (check-lines-statistics 1 (gethash file-key coverage))
+        (undercover--merge-simplecov-reports reportset)
+        (check-lines-statistics 2 (gethash file-key coverage))))))
+
 ;;; first-example-library-test.el ends here
