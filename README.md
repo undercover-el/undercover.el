@@ -98,3 +98,6 @@ after_success:
     3. make sure ert-runner does not load your project files (your project's `.ert-runner` should use `-L` instead of `-l` for files you want to measure coverage of)
 
 - If you want to measure code coverage locally, you can set `TRAVIS=true` in the shell environment or `(setq undercover-force-coverage t)` in emacs.
+
+- To enable Coveralls parallel builds, set `COVERALLS_PARALLEL` in the shell environment,
+  and configure the web hook as [described in the Coveralls documentation](https://docs.coveralls.io/parallel-build-webhook).
