@@ -136,4 +136,12 @@
       (undercover--merge-simplecov-reports reportset)
       (coveralls--check-lines-statistics 2 (gethash file-key coverage)))))
 
+(ert-deftest test-010/check-text-report ()
+  (let* ((undercover--files-coverage-statistics (make-hash-table :test 'equal))
+         (undercover--files (list (file-truename "test/first-example-library/first-example-library.el")))
+         (report (undercover--create-text-report)))
+    (should (string-equal report "== Code coverage text report ==
+first-example-library : Percent 100% [Relevant: 10 Covered: 10 Missed: 0]
+"))))
+
 ;;; first-example-library-test.el ends here
