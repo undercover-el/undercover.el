@@ -108,17 +108,18 @@ Example of WILDCARDS: (\"*.el\" \"subdir/*.el\" (:exclude \"exclude-*.el\"))."
           (push load-file-name undercover--files))
       (switch-to-buffer (current-buffer)))))
 
-(defun undercover--show-load-file-error (filename)
-  (message "UNDERCOVER: error while covering %s" filename)
+(defun undercover--show-load-file-error (filename load-error)
+  (message "UNDERCOVER: error while covering %s:" filename)
+  (message "UNDERCOVER: %S %S" (car load-error) (cdr load-error))
   (message "UNDERCOVER: please open a new issue at https://github.com/sviridov/undercover.el/issues"))
 
 (defun undercover-file-handler (operation &rest args)
   "Handle `load' OPERATION.  Ignore all ARGS except first."
   (if (eq 'load operation)
-      (condition-case nil
+      (condition-case load-error
           (undercover--load-file-handler (car args))
         (error
-         (undercover--show-load-file-error (car args))
+         (undercover--show-load-file-error (car args) load-error)
          (undercover--fallback-file-handler operation args)))
     (undercover--fallback-file-handler operation args)))
 
