@@ -490,24 +490,27 @@ Values of that hash are number of covers."
 (defun undercover--create-text-report ()
   "Print test coverage report for text display."
   (undercover--collect-files-coverage undercover--files)
-  (maphash (lambda (file-name file-coverage)
-             (let ((lines-relevant 0)
-                   (lines-covered 0))
-               (maphash (lambda (_line-number line-hits)
-                          (setq lines-relevant (+ 1 lines-relevant))
-                          (when (> line-hits 0)
-                            (setq lines-covered (+ 1 lines-covered))))
-                        file-coverage)
-               (message "%s : Percent %s%% [Relevant: %s Covered: %s Missed: %s]"
-                        (file-name-base file-name)
-                        (truncate (* (/ (float lines-covered) (float lines-relevant)) 100))
-                        lines-relevant lines-covered (- lines-relevant lines-covered))))
-           undercover--files-coverage-statistics))
+  (let ((report "== Code coverage text report ==\n"))
+    (maphash (lambda (file-name file-coverage)
+               (let ((lines-relevant 0)
+                     (lines-covered 0))
+                 (maphash (lambda (_line-number line-hits)
+                            (setq lines-relevant (+ 1 lines-relevant))
+                            (when (> line-hits 0)
+                              (setq lines-covered (+ 1 lines-covered))))
+                          file-coverage)
+                 (setq report
+                       (format "%s%s : Percent %s%% [Relevant: %s Covered: %s Missed: %s]\n"
+                               report
+                               (file-name-base file-name)
+                               (truncate (* (/ (float lines-covered) (float lines-relevant)) 100))
+                               lines-relevant lines-covered (- lines-relevant lines-covered)))))
+             undercover--files-coverage-statistics)
+    report))
 
 (defun undercover--text-report ()
   "Create and display test coverage."
-  (message "== Code coverage text report ==\n")
-  (undercover--create-text-report))
+  (message "%s" (undercover--create-text-report)))
 
 ;; `ert-runner' related functions:
 
