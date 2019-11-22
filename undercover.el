@@ -510,7 +510,13 @@ Values of that hash are number of covers."
 
 (defun undercover--text-report ()
   "Create and display test coverage."
-  (message "%s" (undercover--create-text-report)))
+  (if (null undercover--report-file-path)
+      ;; Just print it to the message buffer
+      (message "%s" (undercover--create-text-report))
+    ;; Write to file
+    (with-temp-buffer
+      (insert (undercover--create-text-report))
+      (write-region nil nil undercover--report-file-path))))
 
 ;; `ert-runner' related functions:
 
