@@ -112,6 +112,19 @@ after_success:
 
 ## Viewing coverage in Emacs
 
+### Simple report
+
+You can generate a simple coverage summary report using the `'text` report format:
+
+```lisp
+(require 'undercover)
+(setq undercover-force-coverage t)
+(undercover "*.el" (:report-file nil) ; or a text file to save the report to
+                   (:report-format 'text))
+```
+
+### Coverage overlay
+
 1. Install [coverage-mode](https://github.com/Bogdanp/coverage-mode)
 
 2. Create the `coverage` directory in your project root
