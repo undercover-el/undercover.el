@@ -108,17 +108,26 @@ Example of WILDCARDS: (\"*.el\" \"subdir/*.el\" (:exclude \"exclude-*.el\"))."
           (push load-file-name undercover--files))
       (switch-to-buffer (current-buffer)))))
 
-(defun undercover--show-load-file-error (filename)
-  (message "UNDERCOVER: error while covering %s" filename)
-  (message "UNDERCOVER: please open a new issue at https://github.com/sviridov/undercover.el/issues"))
+(defun undercover--show-load-file-error (filename load-error)
+  (message "UNDERCOVER: Error while loading %s for coverage:" filename)
+  (message "UNDERCOVER: %s" (error-message-string load-error))
+  (message "UNDERCOVER: The problem may be due to edebug failing to parse the file.")
+  (message "UNDERCOVER: You can try to narrow down the problem using the following steps:")
+  (message "UNDERCOVER: 1. Open %S in an Emacs buffer;" filename)
+  (message "UNDERCOVER: 2. Run M-: `%s';" "(require 'edebug)")
+  (message "UNDERCOVER: 3. Run M-x `edebug-all-defs';")
+  (message "UNDERCOVER: 4. Run M-x `toggle-debug-on-error'.")
+  (message "UNDERCOVER: 5. Run M-x `eval-buffer';")
+  (message "UNDERCOVER: 6. In the *Backtrace* buffer, find a numeric position,")
+  (message "UNDERCOVER:    then M-x `goto-char' to it."))
 
 (defun undercover-file-handler (operation &rest args)
   "Handle `load' OPERATION.  Ignore all ARGS except first."
   (if (eq 'load operation)
-      (condition-case nil
+      (condition-case load-error
           (undercover--load-file-handler (car args))
         (error
-         (undercover--show-load-file-error (car args))
+         (undercover--show-load-file-error (car args) load-error)
          (undercover--fallback-file-handler operation args)))
     (undercover--fallback-file-handler operation args)))
 
