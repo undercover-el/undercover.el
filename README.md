@@ -5,13 +5,14 @@ A test coverage library for [Emacs Lisp](http://www.gnu.org/software/emacs/manua
 
 ## Notes
 
-Few important notes about `undercover.el`:
+A few important notes about `undercover.el`:
 
-- it assumes a certain development cycle of your package (using [Cask](https://github.com/cask/cask), [Travis CI](https://travis-ci.org/), and [Coveralls](https://coveralls.io/)), [Codecov](https://codecov.io/), or compatible;
+- it assumes a certain development cycle of your package (using [Cask](https://github.com/cask/cask), [Travis CI](https://travis-ci.org/), and [Coveralls](https://coveralls.io/), [Codecov](https://codecov.io/), or compatible);
 - it doesn't support test coverage for byte-compiled files;
-- it based on `edebug` and can have some issues with macros coverage. It doesn't support [Circular Objects](http://www.gnu.org/software/emacs/manual/html_node/elisp/Circular-Objects.html).
+- it is based on `edebug` and can have some issues with macro coverage
+- it doesn't support [Circular Objects](http://www.gnu.org/software/emacs/manual/html_node/elisp/Circular-Objects.html).
 
-Check out [combined usage example](https://github.com/undercover-el/undercover.el-combined-usage-example) and [buttercup integration example](https://github.com/undercover-el/undercover.el-buttercup-integration-example) for more information.
+See the [combined usage example](https://github.com/undercover-el/undercover.el-combined-usage-example) and [buttercup integration example](https://github.com/undercover-el/undercover.el-buttercup-integration-example) samples for more information.
 
 ## Installation
 
@@ -27,7 +28,8 @@ Check out [combined usage example](https://github.com/undercover-el/undercover.e
     (depends-on "undercover"))
   ```
 
-- Before `load` or `require` your package in `test/test-helper.el` or `features/support/env.el` (or analogue), call `undercover` with wildcards that will match package files:
+- Before invoking `load` or `require` with your package in your test runner (`test/test-helper.el` / `features/support/env.el` / etc),
+  call `undercover` with wildcards that will match your package's source files:
 
   ```lisp
   (when (require 'undercover nil t)
@@ -36,33 +38,51 @@ Check out [combined usage example](https://github.com/undercover-el/undercover.e
   (require 'awesome-package)
   ```
 
-- Add your repository to [Coveralls](https://coveralls.io/) or [Codecov](https://codecov.io/).
-
-- For coverage services other than [Coveralls](https://coveralls.io/), add the relevant command to `.travis.yml`. For example:
-
-``` yaml
-after_success:
-  # Upload coverage
-  - bash <(curl -s https://codecov.io/bash)
-
-```
+- Add your repository to a coverage reporting service, such as [Coveralls](https://coveralls.io/) or [Codecov](https://codecov.io/).
 
 ## Configuration
 
-- If you don't use [Travis CI](https://travis-ci.org/) you need to set `COVERALLS_REPO_TOKEN` environment variable before running tests, for example:
+### Online services
+
+- **[Travis CI](https://travis-ci.org/) + [Coveralls](https://coveralls.io/)**
+
+  No configuration necessary.
+
+  To enable Coveralls parallel builds, set `COVERALLS_PARALLEL` in the shell environment,
+  and configure the web hook as [described in the Coveralls documentation](https://docs.coveralls.io/parallel-build-webhook).
+
+- **(other CI) + [Coveralls](https://coveralls.io/)**
+
+  You may need to set the `COVERALLS_REPO_TOKEN` environment variable before running tests, for example:
 
   ```sh
   $ COVERALLS_REPO_TOKEN=<your-coveralls-repo-token> cask exec ert-runner
   ```
 
-- If not using [Coveralls](https://coveralls.io/), compatible services (such as CodeCov) can be used by saving the report and uploading it from your pipeline:
+  Consult the [Coveralls documentation](https://docs.coveralls.io/supported-ci-services) for details.
+
+- **[Codecov](https://codecov.io/)**
+
+  CodeCov can be used by saving the report and uploading it from your pipeline.
+
+  In your test runner:
 
   ```lisp
   (undercover "*.el" (:report-file "coverage-final.json")
                      (:send-report nil))
   ```
   
-- Set `report-file` option if you want to change report location:
+  And in your pipeline (`.travis.yml` or equivalent):
+
+  ``` yaml
+  after_success:
+    # Upload coverage
+    - bash <(curl -s https://codecov.io/bash)
+  ```
+
+### Local reports
+
+- Set the `report-file` option to change the report file location:
 
   ```lisp
   (undercover "*.el" (:report-file "/tmp/local-report.json"))
@@ -70,7 +90,7 @@ after_success:
 
   `undercover.el` will try to merge new report with existing one.
 
-- Set `send-report` option to `nil` if you don't want to send coverage report:
+- Set the `send-report` option to `nil` to disable uploading the coverage report to an online service:
 
   ```lisp
   (undercover "*.el" (:report-file "/tmp/local-report.json") (:send-report nil))
@@ -84,13 +104,15 @@ after_success:
                      (:send-report nil))
   ```
 
-- Set `UNDERCOVER_FORCE` environment variable if you want to do coverage calculation locally:
+- Set the `UNDERCOVER_FORCE` environment variable to calculate coverage even when not running on a CI:
 
   ```sh
   $ UNDERCOVER_FORCE=true cask exec ert-runner
   ```
 
-- Set `UNDERCOVER_CONFIG` if you want to configure `undercover.el` via environment variables:
+  Alternatively, use `(setq undercover-force-coverage t)` before calling `(undercover)`.
+
+- Set the `UNDERCOVER_CONFIG` variable to configure `undercover.el` via the environment:
 
   ```lisp
   (when (require 'undercover nil t) (undercover))
@@ -100,15 +122,15 @@ after_success:
   $ UNDERCOVER_CONFIG='("*.el" (:exclude "awesome-examples.el"))' cask exec ert-runner
   ```
 
-- If you get `"UNDERCOVER: No coverage information [...]"`, make sure of the following:
-    1. remove byte-compiled files (`*.elc`) of your project
-    2. load and configure undercover before your project files (see above)
-    3. make sure ert-runner does not load your project files (your project's `.ert-runner` should use `-L` instead of `-l` for files you want to measure coverage of)
+## Troubleshooting
 
-- If you want to measure code coverage locally, you can set `TRAVIS=true` in the shell environment or `(setq undercover-force-coverage t)` in emacs.
+### "UNDERCOVER: No coverage information [...]"
 
-- To enable Coveralls parallel builds, set `COVERALLS_PARALLEL` in the shell environment,
-  and configure the web hook as [described in the Coveralls documentation](https://docs.coveralls.io/parallel-build-webhook).
+Try the following:
+
+1. remove byte-compiled files (`*.elc`) of your project
+2. load and configure undercover before your project files (see above)
+3. make sure `ert-runner` does not load your project files (your project's `.ert-runner` should use `-L` instead of `-l` for files you want to measure coverage of)
 
 ## Viewing coverage in Emacs
 
@@ -131,13 +153,13 @@ You can generate a simple coverage summary report using the `'text` report forma
 
 3. Configure `undercover.el` as follows:
 
-  ```lisp
-  (require 'undercover)
-  (setq undercover-force-coverage t)
-  (undercover "*.el" (:report-file "coverage/.resultset.json")
-                     (:report-format 'simplecov)
-                     (:send-report nil))
-  ```
+   ```lisp
+   (require 'undercover)
+   (setq undercover-force-coverage t)
+   (undercover "*.el" (:report-file "coverage/.resultset.json")
+                      (:report-format 'simplecov)
+                      (:send-report nil))
+   ```
 
 4. Run your tests
 
