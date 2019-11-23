@@ -124,6 +124,18 @@ See the [combined usage example](https://github.com/undercover-el/undercover.el-
 
 ## Troubleshooting
 
+### Code in macros is not included in coverage reports
+
+You may need to teach `edebug` how to instrument the affected macros.
+
+See ["Instrumenting Macro Calls" in the Emacs manual](https://www.gnu.org/software/emacs/manual/html_node/elisp/Instrumenting-Macro-Calls.html) 
+and the documentation of `def-edebug-spec` for more details.
+
+### "UNDERCOVER: Error while loading ... for coverage:"
+
+The problem may be due to edebug failing to parse the file.
+Follow the instructions under the error message.
+
 ### "UNDERCOVER: No coverage information [...]"
 
 Try the following:
