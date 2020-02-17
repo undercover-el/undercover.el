@@ -183,8 +183,15 @@ Example of WILDCARDS: (\"*.el\" \"subdir/*.el\" (:exclude \"exclude-*.el\"))."
 
 (defun undercover--set-edebug-handlers ()
   "Replace and advice some `edebug' functions with `undercover' handlers."
-  (defalias 'edebug-before 'undercover--stop-point-before)
-  (defalias 'edebug-after 'undercover--stop-point-after)
+  (if (boundp 'edebug-behavior-alist)
+      ;; Emacs 27.
+      (progn
+        (push `(undercover ,(nth 0 (cdr (assq 'edebug edebug-behavior-alist))) undercover--stop-point-before undercover--stop-point-after)
+              edebug-behavior-alist)
+        (setf edebug-new-definition-function #'undercover--new-definition))
+    ;; Earlier Emacs versions.
+    (defalias 'edebug-before 'undercover--stop-point-before)
+    (defalias 'edebug-after 'undercover--stop-point-after))
   (undercover--shut-up-edebug-message)
   ;; HACK: Ensures that debugger is turned off.
   ;; https://travis-ci.org/sviridov/multiple-cursors.el/builds/37672312#L350
@@ -192,6 +199,9 @@ Example of WILDCARDS: (\"*.el\" \"subdir/*.el\" (:exclude \"exclude-*.el\"))."
   (setq debug-on-error  nil
         debug-on-signal nil
         edebug-on-error nil))
+
+(defun undercover--new-definition (def-name)
+  (put def-name 'edebug-behavior 'undercover))
 
 ;; Coverage statistics related functions:
 
