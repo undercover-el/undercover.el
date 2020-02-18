@@ -134,7 +134,7 @@ Example of WILDCARDS: (\"*.el\" \"subdir/*.el\" (:exclude \"exclude-*.el\"))."
 (defun undercover--edebug-files (files)
   "Use `edebug' package to instrument all macros and functions in FILES."
   (when files
-    (let ((regexp (->> files (regexp-opt) (format "/%s$"))))
+    (let ((regexp (->> (-map #'expand-file-name files) (regexp-opt) (format "^%s$"))))
       (add-to-list 'file-name-handler-alist (cons regexp 'undercover-file-handler)))))
 
 (setf (symbol-function 'undercover--stop-point-before)
