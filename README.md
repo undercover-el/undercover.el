@@ -7,7 +7,7 @@ A test coverage library for [Emacs Lisp](http://www.gnu.org/software/emacs/manua
 
 A few important notes about `undercover.el`:
 
-- it assumes a certain development cycle of your package (using [Cask](https://github.com/cask/cask), [Travis CI](https://travis-ci.org/), and [Coveralls](https://coveralls.io/), [Codecov](https://codecov.io/), or compatible);
+- it assumes a certain development cycle of your package (using either [Cask](https://github.com/cask/cask) or [Eldev](https://github.com/doublep/eldev), [Travis CI](https://travis-ci.org/), and [Coveralls](https://coveralls.io/), [Codecov](https://codecov.io/), or compatible);
 - it doesn't support test coverage for byte-compiled files;
 - it is based on `edebug` and can have some issues with macro coverage
 - it doesn't support [Circular Objects](http://www.gnu.org/software/emacs/manual/html_node/elisp/Circular-Objects.html).
@@ -15,6 +15,8 @@ A few important notes about `undercover.el`:
 See the [combined usage example](https://github.com/undercover-el/undercover.el-combined-usage-example) and [buttercup integration example](https://github.com/undercover-el/undercover.el-buttercup-integration-example) samples for more information.
 
 ## Installation
+
+### Cask
 
 - Add `undercover.el` to your [Cask](https://github.com/cask/cask) file:
 
@@ -39,6 +41,20 @@ See the [combined usage example](https://github.com/undercover-el/undercover.el-
   ```
 
 - Add your repository to a coverage reporting service, such as [Coveralls](https://coveralls.io/) or [Codecov](https://codecov.io/).
+
+### Eldev
+
+- Activate `undercover` plugin in your [Eldev](https://github.com/doublep/eldev) file:
+
+  ```lisp
+  (eldev-use-plugin 'undercover)
+  ```
+
+- When running tests on CI server, make sure not to do it in packaged or byte-compiled mode. Or do it twice: once with your project loaded as source code, once as a package. The reason is that `undercover.el` doesn't work with byte-compiled files.
+
+- Add your repository to a coverage reporting service, such as [Coveralls](https://coveralls.io/) or [Codecov](https://codecov.io/).
+
+See [relevant documentation](https://github.com/doublep/eldev#undercover-plugin) on Eldev's own page for more information.
 
 ## Configuration
 
@@ -82,6 +98,8 @@ See the [combined usage example](https://github.com/undercover-el/undercover.el-
 
 ### Local reports
 
+#### Cask
+
 - Set the `report-file` option to change the report file location:
 
   ```lisp
@@ -121,6 +139,18 @@ See the [combined usage example](https://github.com/undercover-el/undercover.el-
   ```sh
   $ UNDERCOVER_CONFIG='("*.el" (:exclude "awesome-examples.el"))' cask exec ert-runner
   ```
+
+#### Eldev
+
+With Eldev generating local reports is very easy:
+
+  ```sh
+  $ eldev test -U local-report.json
+  ```
+
+Option `-U` is the short form of `--undercover-report` and is only available if the plugin is activated (see above). Option `-u` (`--undercover`) lets you configure the library from command line. For more information see [Eldev's documentation](https://github.com/doublep/eldev#undercover-plugin).
+
+Selecting which exactly files you want `undercover.el` to instrument is not possible from command line: these always default to all `.el` files in `main` fileset. However, you can adjust variable `eldev-undercover-fileset` in file `Eldev` if you need to change that for some reason.
 
 ## Troubleshooting
 
