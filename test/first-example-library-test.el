@@ -33,8 +33,10 @@
     (require 'first-example-library)))
 
 (ert-deftest test-001/edebug-handlers-are-setted ()
-  (should (eq 'undercover--stop-point-before (symbol-function 'edebug-before)))
-  (should (eq 'undercover--stop-point-after (symbol-function 'edebug-after))))
+  (if (boundp 'edebug-behavior-alist)
+      (should (assq 'undercover edebug-behavior-alist))
+    (should (eq 'undercover--stop-point-before (symbol-function 'edebug-before)))
+    (should (eq 'undercover--stop-point-after (symbol-function 'edebug-after)))))
 
 (ert-deftest test-002/result-is-correct ()
   (should (= 1.0 (distance '(0 0) '(1 0))))
