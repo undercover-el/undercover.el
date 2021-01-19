@@ -247,7 +247,7 @@ Values of that hash are number of covers."
 ;; Continuous integration related functions:
 
 (defun undercover--under-travis-ci-p ()
-  "Check that `undercover' running under Travis CI service."
+  "Check if `undercover' is running under the Travis CI service."
   (getenv "TRAVIS"))
 
 (defun undercover--coveralls-repo-token ()
@@ -255,7 +255,7 @@ Values of that hash are number of covers."
   (getenv "COVERALLS_REPO_TOKEN"))
 
 (defun undercover--under-ci-p ()
-  "Check that `undercover' running under continuous integration service."
+  "Check if `undercover' is running under some continuous integration service."
   (or
    (equal (getenv "CI") "true")
    (undercover--coveralls-repo-token)
