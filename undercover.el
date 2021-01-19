@@ -250,6 +250,10 @@ Values of that hash are number of covers."
   "Check if `undercover' is running under the Travis CI service."
   (getenv "TRAVIS"))
 
+(defun undercover--under-shippable-p ()
+  "Check if `undercover' is running under the Shippable CI service."
+  (getenv "SHIPPABLE"))
+
 (defun undercover--coveralls-repo-token ()
   "Return coveralls.io repo token provided by user."
   (getenv "COVERALLS_REPO_TOKEN"))
@@ -260,6 +264,7 @@ Values of that hash are number of covers."
    (equal (getenv "CI") "true")
    (undercover--coveralls-repo-token)
    (undercover--under-travis-ci-p)
+   (undercover--under-shippable-p)
    undercover-force-coverage))
 
 ;;; Reports related functions:
@@ -301,15 +306,14 @@ Values of that hash are number of covers."
   "Update test coverage REPORT for coveralls.io with repository token."
   (puthash "repo_token" (undercover--coveralls-repo-token) report))
 
-(defun undercover--try-update-coveralls-report-with-shippable (report)
+(defun undercover--update-coveralls-report-with-shippable (report)
   "Update test coverage REPORT for coveralls.io with Shippable service information."
-  (when (getenv "SHIPPABLE")
+  (undercover--fill-hash-table report
+                               "service_name"   "shippable"
+                               "service_job_id" (getenv "BUILD_NUMBER"))
+  (unless (string-equal "false" (getenv "PULL_REQUEST"))
     (undercover--fill-hash-table report
-      "service_name"   "shippable"
-      "service_job_id" (getenv "BUILD_NUMBER"))
-    (unless (string-equal "false" (getenv "PULL_REQUEST"))
-      (undercover--fill-hash-table report
-        "service_pull_request" (getenv "PULL_REQUEST")))))
+                                 "service_pull_request" (getenv "PULL_REQUEST"))))
 
 (defun undercover--update-coveralls-report-with-travis-ci (report)
   "Update test coverage REPORT for coveralls.io with Travis CI service information."
@@ -395,12 +399,17 @@ Values of that hash are number of covers."
   (undercover--collect-files-coverage undercover--files)
   (let ((report (make-hash-table :test 'equal)))
     (cond
+     ((undercover--under-shippable-p)
+      (undercover--update-coveralls-report-with-shippable report))
+     ((undercover--under-travis-ci-p)
+      (undercover--update-coveralls-report-with-travis-ci report))
      ((undercover--coveralls-repo-token)
-      (undercover--update-coveralls-report-with-repo-token report)
-      (undercover--try-update-coveralls-report-with-shippable report))
-     ((undercover--under-travis-ci-p) (undercover--update-coveralls-report-with-travis-ci report))
-     (t (unless undercover-force-coverage
-          (error "Unsupported coveralls.io report"))))
+      nil) ;; manual configuration
+     (t
+      (unless undercover-force-coverage
+        (error "Unsupported coveralls.io report"))))
+    (when (undercover--coveralls-repo-token)
+      (undercover--update-coveralls-report-with-repo-token report))
     (undercover--update-coveralls-report-with-git report)
     (undercover--fill-coveralls-report report)
     (undercover--merge-coveralls-reports report)
