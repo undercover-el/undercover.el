@@ -246,19 +246,29 @@ Values of that hash are number of covers."
 
 ;; Continuous integration related functions:
 
-(defun undercover--under-travic-ci-p ()
-  "Check that `undercover' running under Travis CI service."
+(defun undercover--under-travis-ci-p ()
+  "Check if `undercover' is running under the Travis CI service."
   (getenv "TRAVIS"))
+
+(defun undercover--under-shippable-p ()
+  "Check if `undercover' is running under the Shippable CI service."
+  (getenv "SHIPPABLE"))
+
+(defun undercover--under-github-actions-p ()
+  "Check if `undercover' is running under the GitHub Actions CI service."
+  (getenv "GITHUB_RUN_ID"))
 
 (defun undercover--coveralls-repo-token ()
   "Return coveralls.io repo token provided by user."
   (getenv "COVERALLS_REPO_TOKEN"))
 
 (defun undercover--under-ci-p ()
-  "Check that `undercover' running under continuous integration service."
+  "Check if `undercover' is running under some continuous integration service."
   (or
+   (equal (getenv "CI") "true")
    (undercover--coveralls-repo-token)
-   (undercover--under-travic-ci-p)
+   (undercover--under-travis-ci-p)
+   (undercover--under-shippable-p)
    undercover-force-coverage))
 
 ;;; Reports related functions:
@@ -300,15 +310,21 @@ Values of that hash are number of covers."
   "Update test coverage REPORT for coveralls.io with repository token."
   (puthash "repo_token" (undercover--coveralls-repo-token) report))
 
-(defun undercover--try-update-coveralls-report-with-shippable (report)
+(defun undercover--update-coveralls-report-with-shippable (report)
   "Update test coverage REPORT for coveralls.io with Shippable service information."
-  (when (getenv "SHIPPABLE")
+  (undercover--fill-hash-table report
+                               "service_name"   "shippable"
+                               "service_job_id" (getenv "BUILD_NUMBER"))
+  (unless (string-equal "false" (getenv "PULL_REQUEST"))
     (undercover--fill-hash-table report
-      "service_name"   "shippable"
-      "service_job_id" (getenv "BUILD_NUMBER"))
-    (unless (string-equal "false" (getenv "PULL_REQUEST"))
-      (undercover--fill-hash-table report
-        "service_pull_request" (getenv "PULL_REQUEST")))))
+                                 "service_pull_request" (getenv "PULL_REQUEST"))))
+
+(defun undercover--update-coveralls-report-with-github-actions (report)
+  "Update test coverage REPORT for coveralls.io with GitHub Actions service information."
+  (undercover--fill-hash-table report
+                               "service_name"   "undercover-github-actions"
+                               "service_number" (getenv "GITHUB_RUN_ID")
+                               "commit_sha"     (getenv "GITHUB_SHA")))
 
 (defun undercover--update-coveralls-report-with-travis-ci (report)
   "Update test coverage REPORT for coveralls.io with Travis CI service information."
@@ -394,12 +410,19 @@ Values of that hash are number of covers."
   (undercover--collect-files-coverage undercover--files)
   (let ((report (make-hash-table :test 'equal)))
     (cond
+     ((undercover--under-shippable-p)
+      (undercover--update-coveralls-report-with-shippable report))
+     ((undercover--under-github-actions-p)
+      (undercover--update-coveralls-report-with-github-actions report))
+     ((undercover--under-travis-ci-p)
+      (undercover--update-coveralls-report-with-travis-ci report))
      ((undercover--coveralls-repo-token)
-      (undercover--update-coveralls-report-with-repo-token report)
-      (undercover--try-update-coveralls-report-with-shippable report))
-     ((undercover--under-travic-ci-p) (undercover--update-coveralls-report-with-travis-ci report))
-     (t (unless undercover-force-coverage
-          (error "Unsupported coveralls.io report"))))
+      nil) ;; manual configuration
+     (t
+      (unless undercover-force-coverage
+        (error "Unsupported coveralls.io report"))))
+    (when (undercover--coveralls-repo-token)
+      (undercover--update-coveralls-report-with-repo-token report))
     (undercover--update-coveralls-report-with-git report)
     (undercover--fill-coveralls-report report)
     (undercover--merge-coveralls-reports report)
@@ -418,10 +441,15 @@ Values of that hash are number of covers."
   "Send report to coveralls.io."
   (let ((coveralls-url "https://coveralls.io/api/v1/jobs"))
     (message "Sending: report to coveralls.io")
-    (shut-up
-     (shell-command
-      (format "curl -v --include --form json_file=@%s %s" undercover--report-file-path coveralls-url)))
-    (message "Sending: OK")))
+    (unless (zerop (call-process "curl"
+                                 nil '(:file "/dev/stderr") t
+                                 ;; "-v" "--include"
+                                 "--fail" "--silent" "--show-error"
+                                 "--form"
+                                 (concat "json_file=@" undercover--report-file-path)
+                                 coveralls-url))
+      (error "Upload to coveralls.io failed"))
+    (message "\nSending: OK")))
 
 (defun undercover--coveralls-report ()
   "Create and submit test coverage report to coveralls.io."
@@ -612,7 +640,7 @@ Return wildcards."
   "Enable test coverage for files matched by CONFIGURATION.
 Example of CONFIGURATION: (\"*.el\" \"subdir/*.el\" (:exclude \"exclude-*.el\")).
 
-If running under Travic CI automatically generate report
+If running under Travis CI automatically generate report
 on `kill-emacs' and send it to coveralls.io."
   `(undercover--setup
     (list
