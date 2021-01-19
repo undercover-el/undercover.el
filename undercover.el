@@ -419,10 +419,15 @@ Values of that hash are number of covers."
   "Send report to coveralls.io."
   (let ((coveralls-url "https://coveralls.io/api/v1/jobs"))
     (message "Sending: report to coveralls.io")
-    (shut-up
-     (shell-command
-      (format "curl -v --include --form json_file=@%s %s" undercover--report-file-path coveralls-url)))
-    (message "Sending: OK")))
+    (unless (zerop (call-process "curl"
+                                 nil '(:file "/dev/stderr") t
+                                 ;; "-v" "--include"
+                                 "--fail" "--silent" "--show-error"
+                                 "--form"
+                                 (concat "json_file=@" undercover--report-file-path)
+                                 coveralls-url))
+      (error "Upload to coveralls.io failed"))
+    (message "\nSending: OK")))
 
 (defun undercover--coveralls-report ()
   "Create and submit test coverage report to coveralls.io."
