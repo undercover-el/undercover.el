@@ -246,7 +246,7 @@ Values of that hash are number of covers."
 
 ;; Continuous integration related functions:
 
-(defun undercover--under-travic-ci-p ()
+(defun undercover--under-travis-ci-p ()
   "Check that `undercover' running under Travis CI service."
   (getenv "TRAVIS"))
 
@@ -259,7 +259,7 @@ Values of that hash are number of covers."
   (or
    (equal (getenv "CI") "true")
    (undercover--coveralls-repo-token)
-   (undercover--under-travic-ci-p)
+   (undercover--under-travis-ci-p)
    undercover-force-coverage))
 
 ;;; Reports related functions:
@@ -398,7 +398,7 @@ Values of that hash are number of covers."
      ((undercover--coveralls-repo-token)
       (undercover--update-coveralls-report-with-repo-token report)
       (undercover--try-update-coveralls-report-with-shippable report))
-     ((undercover--under-travic-ci-p) (undercover--update-coveralls-report-with-travis-ci report))
+     ((undercover--under-travis-ci-p) (undercover--update-coveralls-report-with-travis-ci report))
      (t (unless undercover-force-coverage
           (error "Unsupported coveralls.io report"))))
     (undercover--update-coveralls-report-with-git report)
@@ -618,7 +618,7 @@ Return wildcards."
   "Enable test coverage for files matched by CONFIGURATION.
 Example of CONFIGURATION: (\"*.el\" \"subdir/*.el\" (:exclude \"exclude-*.el\")).
 
-If running under Travic CI automatically generate report
+If running under Travis CI automatically generate report
 on `kill-emacs' and send it to coveralls.io."
   `(undercover--setup
     (list
