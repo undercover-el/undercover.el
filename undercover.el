@@ -257,6 +257,7 @@ Values of that hash are number of covers."
 (defun undercover--under-ci-p ()
   "Check that `undercover' running under continuous integration service."
   (or
+   (equal (getenv "CI") "true")
    (undercover--coveralls-repo-token)
    (undercover--under-travic-ci-p)
    undercover-force-coverage))
