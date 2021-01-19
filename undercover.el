@@ -254,6 +254,10 @@ Values of that hash are number of covers."
   "Check if `undercover' is running under the Shippable CI service."
   (getenv "SHIPPABLE"))
 
+(defun undercover--under-github-actions-p ()
+  "Check if `undercover' is running under the GitHub Actions CI service."
+  (getenv "GITHUB_RUN_ID"))
+
 (defun undercover--coveralls-repo-token ()
   "Return coveralls.io repo token provided by user."
   (getenv "COVERALLS_REPO_TOKEN"))
@@ -314,6 +318,13 @@ Values of that hash are number of covers."
   (unless (string-equal "false" (getenv "PULL_REQUEST"))
     (undercover--fill-hash-table report
                                  "service_pull_request" (getenv "PULL_REQUEST"))))
+
+(defun undercover--update-coveralls-report-with-github-actions (report)
+  "Update test coverage REPORT for coveralls.io with GitHub Actions service information."
+  (undercover--fill-hash-table report
+                               "service_name"   "undercover-github-actions"
+                               "service_number" (getenv "GITHUB_RUN_ID")
+                               "commit_sha"     (getenv "GITHUB_SHA")))
 
 (defun undercover--update-coveralls-report-with-travis-ci (report)
   "Update test coverage REPORT for coveralls.io with Travis CI service information."
@@ -401,6 +412,8 @@ Values of that hash are number of covers."
     (cond
      ((undercover--under-shippable-p)
       (undercover--update-coveralls-report-with-shippable report))
+     ((undercover--under-github-actions-p)
+      (undercover--update-coveralls-report-with-github-actions report))
      ((undercover--under-travis-ci-p)
       (undercover--update-coveralls-report-with-travis-ci report))
      ((undercover--coveralls-repo-token)

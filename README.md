@@ -60,6 +60,48 @@ See [relevant documentation](https://github.com/doublep/eldev#undercover-plugin)
 
 ### Online services
 
+- **[GitHub Actions](https://github.com/features/actions) + [Coveralls](https://coveralls.io/)**
+
+  You will need to set the `COVERALLS_REPO_TOKEN` environment variable. This can be done in the top-level `env` block.
+
+  To enable Coveralls parallel builds, set `COVERALLS_PARALLEL` in the shell environment,
+  and add a final job with `if: always()` which pings the webhook.
+
+  Here is a complete example:
+
+  ```yaml
+  on: [ push, pull_request ]
+  env:
+    COVERALLS_PARALLEL: 1
+    COVERALLS_REPO_TOKEN: 0123456789abcdefghijklmnopqrstuwx
+  jobs:
+    test:
+      runs-on: ubuntu-latest
+      strategy:
+        matrix:
+          emacs_version:
+          - 25.3
+          - 26.3
+          - 27.1
+          - snapshot
+      steps:
+      - uses: purcell/setup-emacs@master
+        with:
+          version: ${{ matrix.emacs_version }}
+      - uses: conao3/setup-cask@master
+      - uses: actions/checkout@v2
+      - name: Test
+        run: |
+          cask install
+          cask exec ert-runner
+    finalize:
+      runs-on: ubuntu-latest
+      if: always()
+      needs: test
+      steps:
+      - run: curl "https://coveralls.io/webhook?repo_token=$COVERALLS_REPO_TOKEN" -d "payload[build_num]=$GITHUB_RUN_ID&payload[status]=done"
+  ```
+
 - **[Travis CI](https://travis-ci.org/) + [Coveralls](https://coveralls.io/)**
 
   No configuration necessary.
