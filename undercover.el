@@ -841,7 +841,9 @@ These values may be overridden through the environment (see
 
 (defun undercover-coveralls--send-report ()
   "Send report to coveralls.io."
-  (let ((coveralls-url "https://coveralls.io/api/v1/jobs"))
+  (let* ((coveralls-endpoint (or (getenv "COVERALLS_ENDPOINT")
+                                 "https://coveralls.io"))
+         (coveralls-url (concat coveralls-endpoint "/api/v1/jobs")))
     (message "Sending: report to coveralls.io")
     (unless (zerop (call-process "curl"
                                  nil '(:file "/dev/stderr") t
