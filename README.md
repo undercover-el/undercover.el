@@ -165,6 +165,7 @@ See [relevant documentation](https://github.com/doublep/eldev#undercover-plugin)
   - `COVERALLS_SERVICE_NAME`
   - `COVERALLS_REPO_TOKEN`
   - `COVERALLS_SERVICE_NUMBER`
+  - `COVERALLS_SERVICE_JOB_ID`
   - `COVERALLS_SERVICE_PULL_REQUEST`
   - `COVERALLS_PARALLEL`
   - `COVERALLS_FLAG_NAME`
