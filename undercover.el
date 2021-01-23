@@ -16,8 +16,6 @@
 
 ;;; Code:
 
-(eval-when-compile (require 'cl))
-
 (require 'edebug)
 (require 'json)
 (require 'dash)
@@ -71,8 +69,8 @@ Configured using the :report-file configuration option.")
 (defun undercover--fill-hash-table (hash-table &rest keys-and-values)
   "Fill HASH-TABLE from KEYS-AND-VALUES."
   (declare (indent 1))
-  (loop for (key value) on keys-and-values by #'cddr
-        do (puthash key value hash-table))
+  (cl-loop for (key value) on keys-and-values by #'cddr
+           do (puthash key value hash-table))
   hash-table)
 
 ;; TODO: make this a macro, so that the values in keys-and-values are lazily
@@ -81,10 +79,10 @@ Configured using the :report-file configuration option.")
   "Fill HASH-TABLE from KEYS-AND-VALUES, but omit nil VALUES, and
 don't overwrite existing KEYS."
   (declare (indent 1))
-  (loop for (key value) on keys-and-values by #'cddr
-        do (when (and value
-                      (not (gethash key hash-table)))
-             (puthash key value hash-table)))
+  (cl-loop for (key value) on keys-and-values by #'cddr
+           do (when (and value
+                         (not (gethash key hash-table)))
+                (puthash key value hash-table)))
   hash-table)
 
 (defun undercover--make-hash-table (&rest keys-and-values)
@@ -95,7 +93,7 @@ don't overwrite existing KEYS."
   "Search for and return the list of files matched by WILDCARDS.
 
 Example of WILDCARDS: (\"*.el\" \"subdir/*.el\" (:exclude \"exclude-*.el\"))."
-  (destructuring-bind (exclude-clauses include-wildcards)
+  (cl-destructuring-bind (exclude-clauses include-wildcards)
       (--separate (and (consp it) (eq :exclude (car it))) wildcards)
     (let* ((exclude-wildcards (-mapcat #'cdr exclude-clauses))
            (exclude-files (-mapcat #'file-expand-wildcards exclude-wildcards))
@@ -181,7 +179,7 @@ Otherwise, return nil."
       (lambda (before-index)
         "Increase the number of times that the stop point at BEFORE-INDEX was covered."
         (when (boundp 'edebug-freq-count)
-          (incf (aref edebug-freq-count before-index)))
+          (cl-incf (aref edebug-freq-count before-index)))
         before-index))
 
 (setf (symbol-function 'undercover--stop-point-after)
@@ -198,7 +196,7 @@ Otherwise, return nil."
 (setf (symbol-function 'undercover--align-counts-between-stop-points)
       (lambda (before-index after-index)
         "Decrease the number of times that the stop points between BEFORE-INDEX and AFTER-INDEX are covered."
-        (do ((index (1+ before-index) (1+ index)))
+        (cl-do ((index (1+ before-index) (1+ index)))
             ((>= index after-index))
           (setf (aref edebug-freq-count index)
                 (min (aref edebug-freq-count index)
@@ -252,7 +250,7 @@ Otherwise, return nil."
   (let* ((start-marker (car (get edebug-symbol 'edebug)))
          (points (undercover--stop-points edebug-symbol))
          (points-covers (undercover--stop-points-covers edebug-symbol))
-         (points-and-covers (map 'list #'cons points points-covers)))
+         (points-and-covers (cl-map 'list #'cons points points-covers)))
     (dolist (point-and-cover points-and-covers)
       (let* ((point (car point-and-cover))
              (line  (line-number-at-pos (+ point start-marker)))
@@ -647,7 +645,7 @@ These values may be overridden through the environment (see
 
 (defun undercover-coveralls--configured-p ()
   "Check if we can submit a report to Coveralls with what we have/know."
-  (case (gethash :ci-type undercover--env)
+  (cl-case (gethash :ci-type undercover--env)
     ;; No / unknown CI
     ((nil) nil)
     ;; Travis CI - supported "magically" by Coveralls
@@ -684,7 +682,7 @@ These values may be overridden through the environment (see
   (undercover--add-to-hash-table report
     "service_name"         (or
                             (getenv "COVERALLS_SERVICE_NAME")
-                            (case (gethash :ci-type env)
+                            (cl-case (gethash :ci-type env)
                               ((nil)
                                (unless undercover-force-coverage
                                  (error "UNDERCOVER: Failed to detect the CI service")))
@@ -797,12 +795,12 @@ These values may be overridden through the environment (see
 
 (defun undercover-coveralls--merge-report-file-lines-coverage (old-coverage new-coverage)
   "Merge test coverage for lines from OLD-COVERAGE and NEW-COVERAGE."
-  (loop for (old-line-coverage . new-line-coverage)
-        in (-zip-fill 0 old-coverage new-coverage)
-        collect (cond
-                 ((null old-line-coverage) new-line-coverage)
-                 ((null new-line-coverage) old-line-coverage)
-                 (t (+ new-line-coverage old-line-coverage)))))
+  (cl-loop for (old-line-coverage . new-line-coverage)
+           in (-zip-fill 0 old-coverage new-coverage)
+           collect (cond
+                    ((null old-line-coverage) new-line-coverage)
+                    ((null new-line-coverage) old-line-coverage)
+                    (t (+ new-line-coverage old-line-coverage)))))
 
 (defun undercover-coveralls--merge-report-file-coverage (old-file-hash source-files-report)
   "Merge test coverage from OLD-FILE-HASH into SOURCE-FILES-REPORT."
@@ -1002,7 +1000,7 @@ script (https://codecov.io/bash) instead"))))
 (defun undercover--report ()
   "Generate and save/upload a test coverage report, as configured."
 
-  (case undercover--report-format
+  (cl-case undercover--report-format
     ((nil)     (error "UNDERCOVER: Report format not configured and auto-detection failed"))
     (coveralls (undercover-coveralls--report))
     (simplecov (undercover-simplecov--report))
@@ -1060,17 +1058,17 @@ configuration."
   "Extract options from CONFIGURATION and set global variables accordingly.
 
 Options are filtered out, leaving only wildcards, which are returned."
-  (destructuring-bind (wildcards options)
+  (cl-destructuring-bind (wildcards options)
       (--separate (or (stringp it) (eq :exclude (car-safe it))) configuration)
-    (dolist (option options wildcards)
-      (case (car-safe option)
+    (cl-dolist (option options wildcards)
+      (cl-case (car-safe option)
         (:report-file (setq undercover--report-file-path (cadr option)))
         (:report-format (setq undercover--report-format (cadr option)))
         (:send-report (setq undercover--send-report (cadr option)))
         ;; Note: this option is obsolete and intentionally undocumented.
         ;; Please use :report-file and :send-report explicitly instead.
         (:report-type (message "UNDERCOVER: The :report-type option is deprecated.")
-                      (case (cadr option)
+                      (cl-case (cadr option)
                         (:coveralls (setq undercover--report-format 'coveralls))
                         (:codecov (setq undercover--report-format 'codecov)
                                   (setq undercover--send-report nil))
