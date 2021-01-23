@@ -62,6 +62,9 @@ Configured using the :report-file configuration option.")
 (defvar undercover--old-edebug-make-form-wrapper
   (symbol-function 'edebug-make-form-wrapper))
 
+(defvar undercover--env nil
+  "Cached return value of `undercover--build-env'.")
+
 
 ;; ----------------------------------------------------------------------------
 ;; Utilities
@@ -602,12 +605,15 @@ These values may be overridden through the environment (see
     (undercover--read-env env)
     env))
 
-(defconst undercover--env (undercover--build-env))
+(defun undercover--need-env ()
+  "Ensure `undercover--env' is populated with the result of `undercover--build-env'."
+  (setq undercover--env (or undercover--env (undercover--build-env))))
+
 
 (defun undercover--under-ci-p ()
   "Check if Undercover is running under some continuous integration service."
   (or
-   (gethash :ci-type undercover--env)
+   (gethash :ci-type (undercover--need-env))
    (equal (getenv "CI") "true")))
 
 
@@ -646,7 +652,7 @@ These values may be overridden through the environment (see
 
 (defun undercover-coveralls--configured-p ()
   "Check if we can submit a report to Coveralls with what we have/know."
-  (cl-case (gethash :ci-type undercover--env)
+  (cl-case (gethash :ci-type (undercover--need-env))
     ;; No / unknown CI
     ((nil) nil)
     ;; Travis CI - supported "magically" by Coveralls
@@ -790,7 +796,7 @@ These values may be overridden through the environment (see
   "Fill test coverage REPORT for coveralls.io."
   (undercover--fill-hash-table report
     "source_files" (mapcar #'undercover-coveralls--file-report undercover--files))
-  (let ((env (copy-hash-table undercover--env)))
+  (let ((env (copy-hash-table (undercover--need-env))))
     (undercover--update-with-git env)
     (undercover-coveralls--update-report-with-env report env)))
 
