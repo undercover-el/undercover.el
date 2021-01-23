@@ -46,7 +46,7 @@ If nil, auto-detect from the environment.
 Configured using the :report-format configuration option.")
 
 (defvar undercover--send-report t
-  "If non-nil, the coverage report will be uploaded to the configured coverage service.
+  "If non-nil, upload coverage reports to the configured coverage service.
 
 Configured using the :send-report configuration option.")
 
