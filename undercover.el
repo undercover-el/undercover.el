@@ -125,6 +125,9 @@ Otherwise, return nil."
 
 (def-edebug-spec when-let ([&or (symbolp form) (&rest (symbolp form))] body))
 
+;; https://github.com/emacs-mirror/emacs/commit/62cf8f1649468fc2f6c4f8926ab5c4bb184bfbe8
+(def-edebug-spec gv-define-setter (&define name :name gv-setter sexp def-body))
+
 (defun undercover--fallback-file-handler (operation args)
   "Handle any file OPERATION with ARGS."
   (let ((inhibit-file-name-handlers
