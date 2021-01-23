@@ -18,8 +18,10 @@
 
 (defmacro with-env-variable (name value &rest body)
   "Set environment variable NAME to VALUE and evaluate BODY."
+  (declare (indent 2))
  `(let ((---old-env-var--- (getenv ,name)))
     (setenv ,name ,value)
+    (setq undercover--env nil) ; Clear cached environment
     (unwind-protect (progn ,@body)
       (setenv ,name ---old-env-var---))))
 
@@ -73,7 +75,7 @@
 
 (ert-deftest test-006/check-environment-variables ()
   (with-env-variable "TRAVIS" "true"
-    (should (eq 'coveralls (undercover--determine-report-format)))))
+    (should (eq 'coveralls (undercover--detect-report-format)))))
 
 (defun coveralls--check-lines-statistics (multiplier example-library-statistics)
   ;; distance statistics
@@ -112,7 +114,7 @@
                             (gethash "source" file-report)))
 
       (coveralls--check-lines-statistics 1 (gethash "coverage" file-report))
-      (undercover--merge-coveralls-reports report)
+      (undercover-coveralls--merge-reports report)
       (coveralls--check-lines-statistics 2 (gethash "coverage" file-report)))))
 
 (ert-deftest test-008/should-error ()
@@ -135,13 +137,13 @@
            (file-key (file-truename "test/first-example-library/first-example-library.el")))
 
       (coveralls--check-lines-statistics 1 (gethash file-key coverage))
-      (undercover--merge-simplecov-reports reportset)
+      (undercover-simplecov--merge-reports reportset)
       (coveralls--check-lines-statistics 2 (gethash file-key coverage)))))
 
 (ert-deftest test-010/check-text-report ()
   (let* ((undercover--files-coverage-statistics (make-hash-table :test 'equal))
          (undercover--files (list (file-truename "test/first-example-library/first-example-library.el")))
-         (report (undercover--create-text-report)))
+         (report (undercover-text--create-report)))
     (should (string-equal report "== Code coverage text report ==
 first-example-library : Percent 100% [Relevant: 10 Covered: 10 Missed: 0]
 "))))

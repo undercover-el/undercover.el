@@ -19,8 +19,11 @@
 
 (defadvice undercover-safe-report (around self-report activate)
   (let ((undercover--files (list (file-truename "undercover.el")))
-        (undercover--send-report t)
-        (undercover--report-file-path "/tmp/undercover-coverage.json"))
+        (undercover--report-format (if (undercover--under-ci-p)
+                                       'coveralls
+                                     'text))
+        (undercover--send-report (undercover--under-ci-p))
+        (undercover--env nil))
     ad-do-it))
 
 (message "Running tests on Emacs %s" emacs-version)
