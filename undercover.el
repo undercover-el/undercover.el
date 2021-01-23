@@ -196,11 +196,12 @@ Otherwise, return nil."
 (setf (symbol-function 'undercover--align-counts-between-stop-points)
       (lambda (before-index after-index)
         "Decrease the number of times that the stop points between BEFORE-INDEX and AFTER-INDEX are covered."
-        (cl-do ((index (1+ before-index) (1+ index)))
-            ((>= index after-index))
-          (setf (aref edebug-freq-count index)
-                (min (aref edebug-freq-count index)
-                     (aref edebug-freq-count before-index))))))
+        (when (boundp 'edebug-freq-count)
+          (cl-do ((index (1+ before-index) (1+ index)))
+              ((>= index after-index))
+            (setf (aref edebug-freq-count index)
+                  (min (aref edebug-freq-count index)
+                       (aref edebug-freq-count before-index)))))))
 
 (defun undercover--stop-points (name)
   "Return stop points for NAME, ordered by position."
