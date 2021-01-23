@@ -16,14 +16,17 @@
 (defconst first-example-library-report-file
   "/tmp/first-example-library-report.json")
 
+(defun undercover--clean-environment ()
+  (--filter (string-prefix-p "HOME=" it)
+            process-environment))
+
 (defmacro with-env-variable (name value &rest body)
   "Set environment variable NAME to VALUE and evaluate BODY."
   (declare (indent 2))
- `(let ((---old-env-var--- (getenv ,name)))
+ `(let ((process-environment (undercover--clean-environment)))
     (setenv ,name ,value)
     (setq undercover--env nil) ; Clear cached environment
-    (unwind-protect (progn ,@body)
-      (setenv ,name ---old-env-var---))))
+    (progn ,@body)))
 
 (with-env-variable "TRAVIS" "true"
   (let ((undercover-force-coverage nil))
