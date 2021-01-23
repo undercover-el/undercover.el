@@ -1144,7 +1144,7 @@ nil          Detect an appropriate service automatically.
              with the CodeCov upload script
              (https://codecov.io/bash).
 
-             Because CodeCov natively understands SimpleCov's
+             Because CodeCov natively understands Coveralls'
              report format, all this does (compared to
              'coveralls) is configure the default save path to a
              location that the upload script will look for.
