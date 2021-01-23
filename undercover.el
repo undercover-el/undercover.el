@@ -7,7 +7,7 @@
 ;; URL: https://github.com/sviridov/undercover.el
 ;; Created: Sat Sep 27 2014
 ;; Keywords: lisp, tests, coverage, tools
-;; Version: 0.7.0
+;; Version: 0.8.0
 ;; Package-Requires: ((emacs "24") (dash "2.0.0") (shut-up "0.3.2"))
 
 ;;; Commentary:
@@ -21,7 +21,7 @@
 (require 'dash)
 (require 'shut-up)
 
-(defconst undercover-version "0.7.0")
+(defconst undercover-version "0.8.0")
 
 
 ;; ----------------------------------------------------------------------------
