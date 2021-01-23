@@ -650,6 +650,8 @@ These values may be overridden through the environment (see
 ;; ----------------------------------------------------------------------------
 ;; Coverage format / service support:
 
+;; coveralls.io report:
+
 (defun undercover-coveralls--configured-p ()
   "Check if we can submit a report to Coveralls with what we have/know."
   (cl-case (gethash :ci-type (undercover--need-env))
@@ -681,8 +683,6 @@ These values may be overridden through the environment (see
                               "url"  remote-url)))
           (push remote-table remotes-info))))))
 
-
-;; coveralls.io report:
 
 (defun undercover-coveralls--update-report-with-env (report env)
   "Update test coverage REPORT for coveralls.io with information from ENV."
