@@ -1112,8 +1112,9 @@ Undercover is enabled if any of the following is true:
 Each item of CONFIGURATION can be one of the following:
 
 STRING                  Indicates a wildcard of Emacs Lisp files
-                        to include in the coverage.  Examples:
-                        \"*.el\" \"subdir/*.el\"
+                        to include in the coverage.  These are
+                        globbed using `file-expand-wildcards'.
+                        Examples: \"*.el\" \"subdir/*.el\"
 
 (:exclude STRING)       Indicates a wildcard of Emacs Lisp files
                         to exclude form the coverage.
