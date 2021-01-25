@@ -63,6 +63,7 @@ Configured using the :merge-report configuration option.")
 ;; 2 - warnings
 ;; 4 - potentially useful output which differs across Undercover runs
 ;; 5 - default
+;; 6 - verbose messages which in some situations may point towards a problem
 ;; 7 - verbose informational messages
 (defvar undercover--verbosity 5
   "Controls the amount of messages produced.
@@ -174,6 +175,7 @@ Otherwise, return nil."
 
 (defun undercover--load-file-handler (file)
   "Handle the `load' FILE operation."
+  (undercover--message 7 "Instrumenting %s for collecting coverage information." file)
   (let ((edebug-all-defs (undercover--coverage-enabled-p))
         (load-file-name (file-truename file))
         (load-in-progress t))
@@ -636,6 +638,8 @@ These values may be overridden through the environment (see
   "Calculate and return a hash table representing Undercover's environment."
   (let ((env (make-hash-table :test 'eq)))
     (undercover--detect-ci env)
+    (undercover--message 7 "Detected CI: %s"
+                         (or (gethash :ci-name env) "None"))
     (undercover--read-env env)
     env))
 
@@ -858,14 +862,19 @@ These values may be overridden through the environment (see
 
 (defun undercover-coveralls--merge-reports (report)
   "Merge test coverage REPORT with existing from `undercover--report-file-path'."
-  (ignore-errors
-    (let* ((json-object-type 'hash-table)
-           (json-array-type 'list)
-           (old-report (json-read-file undercover--report-file-path))
-           (new-source-files-report (gethash "source_files" report)))
-      (dolist (old-file-hash (gethash "source_files" old-report))
-        (undercover-coveralls--merge-report-file-coverage
-         old-file-hash new-source-files-report)))))
+  (condition-case merge-error
+      (let* ((json-object-type 'hash-table)
+             (json-array-type 'list)
+             (old-report (json-read-file undercover--report-file-path))
+             (new-source-files-report (gethash "source_files" report)))
+        (undercover--message 7
+          "Merging existing Coveralls report: %s" undercover--report-file-path)
+        (dolist (old-file-hash (gethash "source_files" old-report))
+          (undercover-coveralls--merge-report-file-coverage
+           old-file-hash new-source-files-report)))
+    (error
+     (undercover--message 6
+       "Failed to merge Coveralls report: %s" merge-error))))
 
 (defun undercover-coveralls--create-report ()
   "Create test coverage report for coveralls.io."
@@ -969,6 +978,8 @@ script (https://codecov.io/bash) instead"))))
 (defun undercover-simplecov--merge-reports (new-report)
   "Merge test coverage NEW-REPORT with existing from `undercover--report-file-path'."
   (when (file-readable-p undercover--report-file-path)
+    (undercover--message 7
+      "Merging existing SimpleCov report: %s" undercover--report-file-path)
     (let* ((json-object-type 'hash-table)
            (json-array-type 'list)
            (old-report (json-read-file undercover--report-file-path))
@@ -1048,7 +1059,7 @@ script (https://codecov.io/bash) instead"))))
 
 (defun undercover--report ()
   "Generate and save/upload a test coverage report, as configured."
-
+  (undercover--message 7 "Generating report.")
   (cl-case undercover--report-format
     ((nil)     (error "UNDERCOVER: Report format not configured and auto-detection failed"))
     (coveralls (undercover-coveralls--report))
