@@ -53,6 +53,11 @@ Configured using the :report-on-kill configuration option.")
 
 Configured using the :send-report configuration option.")
 
+(defvar undercover--merge-report t
+  "If non-nil, try to merge coverage information into existing report files.
+
+Configured using the :merge-report configuration option.")
+
 (defvar undercover--report-file-path nil
   "The path of the file where the coverage report will be written to.
 
@@ -850,7 +855,8 @@ These values may be overridden through the environment (see
   (undercover--collect-files-coverage undercover--files)
   (let ((report (make-hash-table :test 'equal)))
     (undercover-coveralls--fill-report report)
-    (undercover-coveralls--merge-reports report)
+    (when undercover--merge-report
+      (undercover-coveralls--merge-reports report))
     (json-encode report)))
 
 (defun undercover-coveralls--save-report (json-report)
@@ -958,7 +964,8 @@ script (https://codecov.io/bash) instead"))))
   (undercover--collect-files-coverage undercover--files)
   (let ((report (make-hash-table :test 'equal)))
     (undercover-simplecov--fill-report report)
-    (undercover-simplecov--merge-reports report)
+    (when undercover--merge-report
+      (undercover-simplecov--merge-reports report))
     (json-encode report)))
 
 (defun undercover-simplecov--save-report (json-report)
@@ -1088,6 +1095,7 @@ Options are filtered out, leaving only wildcards, which are returned."
         (:report-format (setq undercover--report-format (cadr option)))
         (:report-on-kill (setq undercover--report-on-kill (cadr option)))
         (:send-report (setq undercover--send-report (cadr option)))
+        (:merge-report (setq undercover--merge-report (cadr option)))
         ;; Note: this option is obsolete and intentionally undocumented.
         ;; Please use (:report-format 'codecov) (:send-report nil) instead.
         (:report-type (message "UNDERCOVER: The :report-type option is deprecated.")
@@ -1154,6 +1162,12 @@ STRING                  Indicates a wildcard of Emacs Lisp files
 (:send-report BOOLEXP)  Sets whether to upload the report to the
                         detected/configured coverage service
                         after generating it.  Enabled by default.
+
+(:merge-report BOOLEXP) If possible, merge collected coverage
+                        data into any existing coverage report
+                        file.  Enabled by default.  If disabled,
+                        undercover.el will always overwrite files
+                        when saving reports.
 
 (:report-format SYMBOL) Sets the report target (file format or
                         coverage service), i.e., what to do with
