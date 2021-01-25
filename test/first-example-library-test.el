@@ -66,6 +66,15 @@
     (should (eq 'undercover--stop-point-before (symbol-function 'edebug-before)))
     (should (eq 'undercover--stop-point-after (symbol-function 'edebug-after)))))
 
+(ert-deftest test/1-setup/wildcards ()
+  (should (equal (undercover--wildcards-to-files nil)
+                 nil))
+  (should (equal (undercover--wildcards-to-files '("*.el"))
+                 '("undercover.el")))
+  (should (equal (undercover--wildcards-to-files '("*.el"
+                                                   (:exclude "under*.el")))
+                 nil)))
+
 (ert-deftest test/2-run/result-is-correct ()
   (should (= 1.0 (distance '(0 0) '(1 0))))
   (should (= 5.0 (distance '(3 3) '(6 7))))
