@@ -10,6 +10,26 @@
 
 ;;; Code:
 
+(eval-and-compile
+  (defun undercover-root ()
+    (if load-file-name
+        ;; Cask
+        (file-name-directory
+         (directory-file-name
+          (file-name-directory
+           load-file-name)))
+      ;; Flycheck
+      (file-name-directory
+       (directory-file-name
+        default-directory)))))
+
+(eval-when-compile
+  (add-to-list 'load-path
+               (undercover-root)))
+
+(require 'advice)
+(require 'undercover)
+
 (defconst first-example-library-filename
   "test/first-example-library/first-example-library.el")
 
@@ -33,9 +53,12 @@
     (undercover "test/first-example-library/*.el"
                 (:report-file first-example-library-report-file)
                 (:send-report nil))
-    (ignore-errors (delete-file first-example-library-report-file))
-    (add-to-list 'load-path (file-truename "test/first-example-library"))
-    (require 'first-example-library)))
+    (ignore-errors (delete-file first-example-library-report-file))))
+
+(eval-and-compile
+  (add-to-list 'load-path
+               (expand-file-name "test/first-example-library" (undercover-root))))
+(require 'first-example-library)
 
 (ert-deftest test-001/edebug-handlers-are-setted ()
   (if (boundp 'edebug-behavior-alist)

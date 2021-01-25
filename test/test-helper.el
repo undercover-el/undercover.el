@@ -8,6 +8,23 @@
 
 ;; Test suite setup for ERT Runner.
 
+(eval-and-compile
+  (defun undercover-root ()
+    (if load-file-name
+        ;; Cask
+        (file-name-directory
+         (directory-file-name
+          (file-name-directory
+           load-file-name)))
+      ;; Flycheck
+      (file-name-directory
+       (directory-file-name
+        default-directory)))))
+
+(eval-when-compile
+  (add-to-list 'load-path
+               (undercover-root)))
+
 (require 'undercover)
 (require 's)
 
