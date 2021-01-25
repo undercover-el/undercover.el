@@ -58,6 +58,17 @@ Configured using the :send-report configuration option.")
 
 Configured using the :merge-report configuration option.")
 
+;; Currently used levels:
+;; 1 - non-fatal errors
+;; 2 - warnings
+;; 4 - potentially useful output which differs across Undercover runs
+;; 5 - default
+;; 7 - verbose informational messages
+(defvar undercover--verbosity 5
+  "Controls the amount of messages produced.
+
+Configured using the :verbosity configuration option.")
+
 (defvar undercover--report-file-path nil
   "The path of the file where the coverage report will be written to.
 
@@ -128,6 +139,12 @@ Otherwise, return nil."
     (when (not (zerop (length value)))
       value)))
 
+(defun undercover--message (level format-string &rest args)
+  "Log a message at the given LEVEL.  FORMAT-STRING and ARGS are as in `message'."
+  (declare (indent 1))
+  (when (<= level undercover--verbosity)
+    (apply #'message (concat "UNDERCOVER: " format-string) args)))
+
 
 ;; ----------------------------------------------------------------------------
 ;; `edebug' related functions and hacks:
@@ -167,17 +184,17 @@ Otherwise, return nil."
       (switch-to-buffer (current-buffer)))))
 
 (defun undercover--show-load-file-error (filename load-error)
-  (message "UNDERCOVER: Error while loading %s for coverage:" filename)
-  (message "UNDERCOVER: %s" (error-message-string load-error))
-  (message "UNDERCOVER: The problem may be due to edebug failing to parse the file.")
-  (message "UNDERCOVER: You can try to narrow down the problem using the following steps:")
-  (message "UNDERCOVER: 1. Open %S in an Emacs buffer;" filename)
-  (message "UNDERCOVER: 2. Run M-: `%s';" "(require 'edebug)")
-  (message "UNDERCOVER: 3. Run M-x `edebug-all-defs';")
-  (message "UNDERCOVER: 4. Run M-x `toggle-debug-on-error'.")
-  (message "UNDERCOVER: 5. Run M-x `eval-buffer';")
-  (message "UNDERCOVER: 6. In the *Backtrace* buffer, find a numeric position,")
-  (message "UNDERCOVER:    then M-x `goto-char' to it."))
+  (undercover--message 1 "Error while loading %s for coverage:" filename)
+  (undercover--message 1 "%s" (error-message-string load-error))
+  (undercover--message 1 "The problem may be due to edebug failing to parse the file.")
+  (undercover--message 1 "You can try to narrow down the problem using the following steps:")
+  (undercover--message 1 "1. Open %S in an Emacs buffer;" filename)
+  (undercover--message 1 "2. Run M-: `%s';" "(require 'edebug)")
+  (undercover--message 1 "3. Run M-x `edebug-all-defs';")
+  (undercover--message 1 "4. Run M-x `toggle-debug-on-error'.")
+  (undercover--message 1 "5. Run M-x `eval-buffer';")
+  (undercover--message 1 "6. In the *Backtrace* buffer, find a numeric position,")
+  (undercover--message 1 "   then M-x `goto-char' to it."))
 
 (defun undercover-file-handler (operation &rest args)
   "Handle the `load' OPERATION.  Ignore all ARGS except first."
@@ -870,9 +887,13 @@ These values may be overridden through the environment (see
   (let* ((coveralls-endpoint (or (getenv "COVERALLS_ENDPOINT")
                                  "https://coveralls.io"))
          (coveralls-url (concat coveralls-endpoint "/api/v1/jobs")))
-    (message "UNDERCOVER: Uploading report to coveralls.io")
+    (undercover--message 5 "Uploading report to coveralls.io")
     (unless (zerop (call-process "curl"
-                                 nil '(:file "/dev/stderr") t
+                                 nil
+                                 (if (>= undercover--verbosity 4)
+                                     '(:file "/dev/stderr")
+                                   nil)
+                                 t
                                  ;; "-v" "--include"
                                  "--fail" "--silent" "--show-error"
                                  "--form"
@@ -881,7 +902,7 @@ These values may be overridden through the environment (see
       (error "UNDERCOVER: Upload to coveralls.io failed"))
     ;; curl's output doesn't end with a newline; print one to stderr now
     (external-debugging-output ?\n)
-    (message "UNDERCOVER: Upload OK")))
+    (undercover--message 5 "Upload OK")))
 
 (defun undercover-coveralls--report ()
   "Create and submit test coverage report to coveralls.io."
@@ -1070,8 +1091,8 @@ configuration."
                                            undercover--report-format
                                            (undercover--detect-report-format))))
         (undercover--report))
-    (message
-     "UNDERCOVER: No coverage information. Make sure that your files are not compiled?")))
+    (undercover--message 1
+      "No coverage information. Make sure that your files are not compiled?")))
 
 (defun undercover--env-configuration ()
   "Read configuration from UNDERCOVER_CONFIG."
@@ -1093,6 +1114,7 @@ Options are filtered out, leaving only wildcards, which are returned."
                   configuration)
     (cl-dolist (option options wildcards)
       (cl-case (car-safe option)
+        (:verbosity (setq undercover--verbosity (cadr option)))
         (:report-file (setq undercover--report-file-path (cadr option)))
         (:report-format (setq undercover--report-format (cadr option)))
         (:report-on-kill (setq undercover--report-on-kill (cadr option)))
@@ -1100,7 +1122,7 @@ Options are filtered out, leaving only wildcards, which are returned."
         (:merge-report (setq undercover--merge-report (cadr option)))
         ;; Note: this option is obsolete and intentionally undocumented.
         ;; Please use (:report-format 'codecov) (:send-report nil) instead.
-        (:report-type (message "UNDERCOVER: The :report-type option is deprecated.")
+        (:report-type (undercover--message 2 "The :report-type option is deprecated.")
                       (cl-case (cadr option)
                         (:coveralls (setq undercover--report-format 'coveralls))
                         (:codecov (setq undercover--report-format 'codecov)
@@ -1150,6 +1172,12 @@ STRING                  Indicates a wildcard of Emacs Lisp files
 (:files STRING...)      Indicates a list of Emacs Lisp files to
                         include in the coverage.  These are
                         interpreted verbatim and are not globbed.
+
+(:verbosity NUMBER)     Controls how detailed undercover.el
+                        should be in reporting what it's doing
+                        using messages, as a number from 0 (no
+                        messages, fatal errors only) to 10 (all
+                        messages).  The default is 5.
 
 (:report-file STRING)   Sets the path of the file where the
                         coverage report will be written to.

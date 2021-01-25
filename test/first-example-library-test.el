@@ -52,7 +52,8 @@
   (let ((undercover-force-coverage nil))
     (undercover "test/first-example-library/*.el"
                 (:report-file first-example-library-report-file)
-                (:send-report nil))
+                (:send-report nil)
+                (:verbosity 10))
     (ignore-errors (delete-file first-example-library-report-file))))
 
 (eval-and-compile
