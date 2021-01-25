@@ -23,16 +23,16 @@
 (defmacro with-env-variable (name value &rest body)
   "Set environment variable NAME to VALUE and evaluate BODY."
   (declare (indent 2))
- `(let ((process-environment (undercover--clean-environment)))
-    (setenv ,name ,value)
-    (setq undercover--env nil) ; Clear cached environment
-    (progn ,@body)))
+  `(let ((process-environment (undercover--clean-environment)))
+     (setenv ,name ,value)
+     (setq undercover--env nil) ; Clear cached environment
+     (progn ,@body)))
 
 (with-env-variable "TRAVIS" "true"
   (let ((undercover-force-coverage nil))
     (undercover "test/first-example-library/*.el"
-      (:report-file first-example-library-report-file)
-      (:send-report nil))
+                (:report-file first-example-library-report-file)
+                (:send-report nil))
     (ignore-errors (delete-file first-example-library-report-file))
     (add-to-list 'load-path (file-truename "test/first-example-library"))
     (require 'first-example-library)))
