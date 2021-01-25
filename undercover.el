@@ -96,12 +96,17 @@ don't overwrite existing KEYS."
   "Search for and return the list of files matched by WILDCARDS.
 
 Example of WILDCARDS: (\"*.el\" \"subdir/*.el\" (:exclude \"exclude-*.el\"))."
-  (cl-destructuring-bind (exclude-clauses include-wildcards)
-      (--separate (and (consp it) (eq :exclude (car it))) wildcards)
-    (let* ((exclude-wildcards (-mapcat #'cdr exclude-clauses))
-           (exclude-files (-mapcat #'file-expand-wildcards exclude-wildcards))
-           (include-files (-mapcat #'file-expand-wildcards include-wildcards)))
-      (-difference include-files exclude-files))))
+  (let (files)
+    (dolist (wildcard wildcards)
+      (setq files
+            (cond
+             ((stringp wildcard)
+              (-union files (file-expand-wildcards wildcard)))
+             ((and (consp wildcard) (eq :exclude (car wildcard)))
+              (-difference files (-mapcat #'file-expand-wildcards (cdr wildcard))))
+             (t
+              (error "UNDERCOVER: Unrecognized wildcard pattern: %S" wildcard)))))
+    files))
 
 (defun undercover--getenv-nonempty (name)
   "Return the value of the environment variable NAME if it exists and is non-empty.

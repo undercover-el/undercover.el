@@ -73,7 +73,11 @@
                  '("undercover.el")))
   (should (equal (undercover--wildcards-to-files '("*.el"
                                                    (:exclude "under*.el")))
-                 nil)))
+                 nil))
+  (should (equal (undercover--wildcards-to-files '("*.el"
+                                                   (:exclude "under*.el")
+                                                   "underco*.el"))
+                 '("undercover.el"))))
 
 (ert-deftest test/2-run/result-is-correct ()
   (should (= 1.0 (distance '(0 0) '(1 0))))
