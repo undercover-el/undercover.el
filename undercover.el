@@ -1083,7 +1083,7 @@ Options are filtered out, leaving only wildcards, which are returned."
         (:report-format (setq undercover--report-format (cadr option)))
         (:send-report (setq undercover--send-report (cadr option)))
         ;; Note: this option is obsolete and intentionally undocumented.
-        ;; Please use :report-file and :send-report explicitly instead.
+        ;; Please use (:report-format 'codecov) (:send-report nil) instead.
         (:report-type (message "UNDERCOVER: The :report-type option is deprecated.")
                       (cl-case (cadr option)
                         (:coveralls (setq undercover--report-format 'coveralls))
