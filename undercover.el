@@ -1183,7 +1183,11 @@ Options may also be specified via the environment variable
 \"UNDERCOVER_CONFIG\", which should be formatted as a literal
 Emacs Lisp list consisting of items as defined above.
 Configuration options in \"UNDERCOVER_CONFIG\" override those in
-CONFIGURATION."
+CONFIGURATION.
+
+If no CONFIGURATION is specified (either as an argument, or via
+the environment variable), the default configuration '(\"*.el\")
+is used."
   `(undercover--setup
     (list
      ,@(--map (if (atom it) it `(list ,@it))
