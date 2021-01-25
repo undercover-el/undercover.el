@@ -870,7 +870,7 @@ These values may be overridden through the environment (see
   (let* ((coveralls-endpoint (or (getenv "COVERALLS_ENDPOINT")
                                  "https://coveralls.io"))
          (coveralls-url (concat coveralls-endpoint "/api/v1/jobs")))
-    (message "Sending: report to coveralls.io")
+    (message "UNDERCOVER: Uploading report to coveralls.io")
     (unless (zerop (call-process "curl"
                                  nil '(:file "/dev/stderr") t
                                  ;; "-v" "--include"
@@ -878,8 +878,10 @@ These values may be overridden through the environment (see
                                  "--form"
                                  (concat "json_file=@" undercover--report-file-path)
                                  coveralls-url))
-      (error "Upload to coveralls.io failed"))
-    (message "\nSending: OK")))
+      (error "UNDERCOVER: Upload to coveralls.io failed"))
+    ;; curl's output doesn't end with a newline; print one to stderr now
+    (external-debugging-output ?\n)
+    (message "UNDERCOVER: Upload OK")))
 
 (defun undercover-coveralls--report ()
   "Create and submit test coverage report to coveralls.io."
@@ -1078,7 +1080,7 @@ configuration."
       (condition-case nil
           (car (read-from-string configuration))
         (error
-         (error "UNDERCOVER: error while parsing configuration"))))))
+         (error "UNDERCOVER: Error while parsing configuration"))))))
 
 (defun undercover--set-options (configuration)
   "Extract options from CONFIGURATION and set global variables accordingly.
@@ -1103,8 +1105,8 @@ Options are filtered out, leaving only wildcards, which are returned."
                         (:coveralls (setq undercover--report-format 'coveralls))
                         (:codecov (setq undercover--report-format 'codecov)
                                   (setq undercover--send-report nil))
-                        (otherwise (error "Unsupported report-type: %s" (cadr option)))))
-        (otherwise (error "Unsupported option: %s" option))))))
+                        (otherwise (error "UNDERCOVER: Unsupported report-type: %s" (cadr option)))))
+        (otherwise (error "UNDERCOVER: Unsupported option: %s" option))))))
 
 (defun undercover--setup (configuration)
   "Enable test coverage for files matched by CONFIGURATION."
