@@ -123,7 +123,7 @@
 (ert-deftest test-008/should-error ()
   (with-env-variable "TRAVIS" nil
     (should-error (undercover-report))
-    (should-error (undercover--create-coveralls-report))))
+    (should-error (undercover-coveralls--create-report))))
 
 (ert-deftest test-009/check-simplecov-report ()
   ;; Don't attempt to merge with report in another format
