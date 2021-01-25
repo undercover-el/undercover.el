@@ -104,6 +104,8 @@ Example of WILDCARDS: (\"*.el\" \"subdir/*.el\" (:exclude \"exclude-*.el\"))."
               (-union files (file-expand-wildcards wildcard)))
              ((and (consp wildcard) (eq :exclude (car wildcard)))
               (-difference files (-mapcat #'file-expand-wildcards (cdr wildcard))))
+             ((and (consp wildcard) (eq :files (car wildcard)))
+              (-union files (cdr wildcard)))
              (t
               (error "UNDERCOVER: Unrecognized wildcard pattern: %S" wildcard)))))
     files))
@@ -1071,7 +1073,10 @@ configuration."
 
 Options are filtered out, leaving only wildcards, which are returned."
   (cl-destructuring-bind (wildcards options)
-      (--separate (or (stringp it) (eq :exclude (car-safe it))) configuration)
+      (--separate (or (stringp it)
+                      (eq :exclude (car-safe it))
+                      (eq :files (car-safe it)))
+                  configuration)
     (cl-dolist (option options wildcards)
       (cl-case (car-safe option)
         (:report-file (setq undercover--report-file-path (cadr option)))
@@ -1124,6 +1129,10 @@ STRING                  Indicates a wildcard of Emacs Lisp files
 (:exclude STRING)       Indicates a wildcard of Emacs Lisp files
                         to exclude form the coverage.
                         Example: (:exclude \"exclude-*.el\")
+
+(:files STRING...)      Indicates a list of Emacs Lisp files to
+                        include in the coverage.  These are
+                        interpreted verbatim and are not globbed.
 
 (:report-file STRING)   Sets the path of the file where the
                         coverage report will be written to.
