@@ -43,6 +43,11 @@ If nil, auto-detect from the environment.
 
 Configured using the :report-format configuration option.")
 
+(defvar undercover--report-on-kill t
+  "If non-nil, queue generating a report before Emacs exits.
+
+Configured using the :report-on-kill configuration option.")
+
 (defvar undercover--send-report t
   "If non-nil, upload coverage reports to the configured coverage service.
 
@@ -1081,6 +1086,7 @@ Options are filtered out, leaving only wildcards, which are returned."
       (cl-case (car-safe option)
         (:report-file (setq undercover--report-file-path (cadr option)))
         (:report-format (setq undercover--report-format (cadr option)))
+        (:report-on-kill (setq undercover--report-on-kill (cadr option)))
         (:send-report (setq undercover--send-report (cadr option)))
         ;; Note: this option is obsolete and intentionally undocumented.
         ;; Please use (:report-format 'codecov) (:send-report nil) instead.
@@ -1098,10 +1104,11 @@ Options are filtered out, leaving only wildcards, which are returned."
     (let ((env-configuration (undercover--env-configuration))
           (default-configuration '("*.el")))
       (undercover--set-edebug-handlers)
-      (undercover-report-on-kill)
       (let ((wildcards (undercover--set-options
                         (or (append configuration env-configuration)
                             default-configuration))))
+	(when undercover--report-on-kill
+          (undercover-report-on-kill))
         (undercover--edebug-files (undercover--wildcards-to-files wildcards))))))
 
 ;;;###autoload
@@ -1136,6 +1143,13 @@ STRING                  Indicates a wildcard of Emacs Lisp files
 
 (:report-file STRING)   Sets the path of the file where the
                         coverage report will be written to.
+
+(:report-on-kill BOOLEXP)  Sets whether to queue generating and
+                        saving/uploading a repot before Emacs
+                        exits.  Enabled by default.
+
+                        If disabled, this can still be done by
+                        calling `undercover-report-on-kill'.
 
 (:send-report BOOLEXP)  Sets whether to upload the report to the
                         detected/configured coverage service
