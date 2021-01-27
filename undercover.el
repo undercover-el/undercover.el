@@ -210,6 +210,8 @@ Otherwise, return nil."
 
 (defun undercover--edebug-files (files)
   "Use the `edebug' package to instrument all macros and functions in FILES."
+  (undercover--message 6 "Preparing to instrument %d file%s."
+                       (length files) (if (= (length files) 1) "" "s"))
   (when files
     (let ((regexp (->> (-map #'expand-file-name files) (regexp-opt) (format "^%s$"))))
       (add-to-list 'file-name-handler-alist (cons regexp 'undercover-file-handler)))))
