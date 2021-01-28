@@ -176,7 +176,7 @@ Otherwise, return nil."
 (defun undercover--load-file-handler (file)
   "Handle the `load' FILE operation."
   (undercover--message 7 "Instrumenting %s for collecting coverage information." file)
-  (let ((edebug-all-defs (undercover--coverage-enabled-p))
+  (let ((edebug-all-defs (undercover-enabled-p))
         (load-file-name (file-truename file))
         (load-in-progress t))
     (unwind-protect
@@ -1089,8 +1089,8 @@ To do this, add `undercover-safe-report' to `kill-emacs-hook'."
 ;; ----------------------------------------------------------------------------
 ;;; Main functions:
 
-(defun undercover--coverage-enabled-p ()
-  "Check if `undercover' is enabled."
+(defun undercover-enabled-p ()
+  "Return non-nil if `undercover' is enabled."
   (or undercover-force-coverage (undercover--under-ci-p)))
 
 (defun undercover-report (&optional report-format)
@@ -1145,7 +1145,7 @@ Options are filtered out, leaving only wildcards, which are returned."
 
 (defun undercover--setup (configuration)
   "Enable test coverage for files matched by CONFIGURATION."
-  (when (undercover--coverage-enabled-p)
+  (when (undercover-enabled-p)
     (let ((env-configuration (undercover--env-configuration))
           (default-configuration '("*.el")))
       (undercover--set-edebug-handlers)
