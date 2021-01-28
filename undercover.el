@@ -1179,7 +1179,7 @@ STRING                  Indicates a wildcard of Emacs Lisp files
                         Examples: \"*.el\" \"subdir/*.el\"
 
 (:exclude STRING)       Indicates a wildcard of Emacs Lisp files
-                        to exclude form the coverage.
+                        to exclude from the coverage.
                         Example: (:exclude \"exclude-*.el\")
 
 (:files STRING...)      Indicates a list of Emacs Lisp files to
