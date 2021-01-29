@@ -36,6 +36,13 @@ continuous integration service.
 Can also be set through the environment, by defining UNDERCOVER_FORCE.")
 (setq undercover-force-coverage (getenv "UNDERCOVER_FORCE"))
 
+(defvar undercover-message-function
+  #'undercover-default-message-function
+  "Function used to emit messages.
+
+The first parameter is a number indicating the log level.
+The following arguments are as in `message'.")
+
 (defvar undercover--report-format nil
   "Indicates the format of the report file and coverage service to submit to.
 
@@ -140,11 +147,18 @@ Otherwise, return nil."
     (when (not (zerop (length value)))
       value)))
 
+(defun undercover-default-message-function (level format-string &rest args)
+  "Log a message at the given LEVEL.  FORMAT-STRING and ARGS are as in `message'.
+
+LEVEL is ignored in this default implementation."
+  (ignore level)
+  (apply #'message (concat "UNDERCOVER: " format-string) args))
+
 (defun undercover--message (level format-string &rest args)
-  "Log a message at the given LEVEL.  FORMAT-STRING and ARGS are as in `message'."
+  "Call `undercover-message-function'."
   (declare (indent 1))
   (when (<= level undercover--verbosity)
-    (apply #'message (concat "UNDERCOVER: " format-string) args)))
+    (apply undercover-message-function level format-string args)))
 
 
 ;; ----------------------------------------------------------------------------
