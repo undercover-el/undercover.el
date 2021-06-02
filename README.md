@@ -60,163 +60,177 @@ See [relevant documentation](https://github.com/doublep/eldev#undercover-plugin)
 
 ### Online services
 
-- **[GitHub Actions](https://github.com/features/actions) + [Coveralls](https://coveralls.io/) + [Coveralls GitHub Action](https://github.com/marketplace/actions/coveralls-github-action)**
+----
 
-  Steps:
+#### **[GitHub Actions](https://github.com/features/actions) + [Coveralls](https://coveralls.io/) + [Coveralls GitHub Action](https://github.com/marketplace/actions/coveralls-github-action)**
 
-  1. Add [the Coveralls GitHub action](https://github.com/marketplace/actions/coveralls-github-action)
-     to your GitHub Actions workflow YAML file, after your test invocation.
+Steps:
 
-     To support matrix builds, add a final job with `parallel-finished: true`, as described in the action's documentation.
+1. Add [the Coveralls GitHub action](https://github.com/marketplace/actions/coveralls-github-action)
+   to your GitHub Actions workflow YAML file, after your test invocation.
 
-  2. Invoke `undercover` with `(:report-format 'lcov) (:send-report nil)`.
+   To support matrix builds, add a final job with `parallel-finished: true`, as described in the action's documentation.
 
-  A complete minimal example (using ert + Cask + ert-runner) can be found [here](https://github.com/undercover-el/undercover.el-github-coveralls-integration-example).
+2. Invoke `undercover` with `(:report-format 'lcov) (:send-report nil)`.
 
-- **[GitHub Actions](https://github.com/features/actions) + [Coveralls](https://coveralls.io/) + undercover.el built-in uploader**
+A complete minimal example (using ert + Cask + ert-runner) can be found [here](https://github.com/undercover-el/undercover.el-github-coveralls-integration-example).
 
-  You will need to export the GitHub Actions access token into the environment.
+----
 
-  To enable Coveralls parallel builds, set `COVERALLS_PARALLEL` in the shell environment,
-  and add a final job with `if: always()` which pings the webhook.
+#### **[GitHub Actions](https://github.com/features/actions) + [Coveralls](https://coveralls.io/) + undercover.el built-in uploader**
 
-  Here is a complete example:
+You will need to export the GitHub Actions access token into the environment.
 
-  ```yaml
-  on: [ push, pull_request ]
-  jobs:
-    test:
-      runs-on: ubuntu-latest
-      strategy:
-        matrix:
-          emacs_version:
-          - 25.3
-          - 26.3
-          - 27.1
-          - snapshot
-      steps:
-      - uses: purcell/setup-emacs@master
-        with:
-          version: ${{ matrix.emacs_version }}
-      - uses: conao3/setup-cask@master
-      - uses: actions/checkout@v2
-      - name: Test
-        env:
-          COVERALLS_FLAG_NAME: Emacs ${{ matrix.emacs_version }}
-          COVERALLS_PARALLEL: 1
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          cask install
-          cask exec ert-runner
-    finalize:
-      runs-on: ubuntu-latest
-      if: always()
-      needs: test
-      steps:
-      - run: curl "https://coveralls.io/webhook?repo_name=$GITHUB_REPOSITORY&repo_token=${{ secrets.GITHUB_TOKEN }}" -d "payload[build_num]=$GITHUB_RUN_NUMBER&payload[status]=done"
-  ```
+To enable Coveralls parallel builds, set `COVERALLS_PARALLEL` in the shell environment,
+and add a final job with `if: always()` which pings the webhook.
 
-  Alternatively to exporting `GITHUB_TOKEN`, you may instead specify `COVERALLS_REPO_TOKEN`, as with any other CI service.
+Here is a complete example:
 
-- **[Travis CI](https://travis-ci.org/) + [Coveralls](https://coveralls.io/)**
+```yaml
+on: [ push, pull_request ]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        emacs_version:
+        - 25.3
+        - 26.3
+        - 27.1
+        - snapshot
+    steps:
+    - uses: purcell/setup-emacs@master
+      with:
+        version: ${{ matrix.emacs_version }}
+    - uses: conao3/setup-cask@master
+    - uses: actions/checkout@v2
+    - name: Test
+      env:
+        COVERALLS_FLAG_NAME: Emacs ${{ matrix.emacs_version }}
+        COVERALLS_PARALLEL: 1
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        cask install
+        cask exec ert-runner
+  finalize:
+    runs-on: ubuntu-latest
+    if: always()
+    needs: test
+    steps:
+    - run: curl "https://coveralls.io/webhook?repo_name=$GITHUB_REPOSITORY&repo_token=${{ secrets.GITHUB_TOKEN }}" -d "payload[build_num]=$GITHUB_RUN_NUMBER&payload[status]=done"
+```
 
-  No configuration necessary.
+Alternatively to exporting `GITHUB_TOKEN`, you may instead specify `COVERALLS_REPO_TOKEN`, as with any other CI service.
 
-  To enable Coveralls parallel builds, set `COVERALLS_PARALLEL` in the shell environment,
-  and configure the web hook as [described in the Coveralls documentation](https://docs.coveralls.io/parallel-build-webhook).
+----
 
-- **(other CI)**
+#### **[Travis CI](https://travis-ci.org/) + [Coveralls](https://coveralls.io/)**
 
-  `undercover.el` has basic support (for reading and parsing relevant environment variables, such as build ID) for the following CI services:
+No configuration necessary.
 
-  - GitHub Actions
-  - Travis CI
-  - Shippable
-  - Drone
-  - Jenkins
-  - Circle CI
-  - CodeShip
-  - Wercker
-  - GitLab CI
-  - AppVeyor
-  - Surf
-  - BuildKite
-  - Semaphore
-  - Codefresh
+To enable Coveralls parallel builds, set `COVERALLS_PARALLEL` in the shell environment,
+and configure the web hook as [described in the Coveralls documentation](https://docs.coveralls.io/parallel-build-webhook).
 
-  Detected values may be overridden by setting the following environment variables:
+----
 
-  - `UNDERCOVER_CI_TYPE`
-  - `UNDERCOVER_CI_NAME`
-  - `UNDERCOVER_COMMIT`
-  - `UNDERCOVER_REF`
-  - `UNDERCOVER_PULL_REQUEST`
-  - `UNDERCOVER_BUILD_ID`
-  - `UNDERCOVER_BUILD_NUMBER`
-  - `UNDERCOVER_JOB_ID`
-  - `UNDERCOVER_JOB_NUMBER`
-  - `UNDERCOVER_JOB_NAME`
+#### **(other CI)**
 
-  See the documentation of `undercover--detect-ci` for a description of the semantics for these variables.
+`undercover.el` has basic support (for reading and parsing relevant environment variables, such as build ID) for the following CI services:
 
-- **(other CI) + [Coveralls](https://coveralls.io/)**
+- GitHub Actions
+- Travis CI
+- Shippable
+- Drone
+- Jenkins
+- Circle CI
+- CodeShip
+- Wercker
+- GitLab CI
+- AppVeyor
+- Surf
+- BuildKite
+- Semaphore
+- Codefresh
 
-  For CI services which are not "magically" supported by Coveralls,
-  you will need to set the `COVERALLS_REPO_TOKEN` environment variable
-  before running tests, for example:
+Detected values may be overridden by setting the following environment variables:
 
-  ```sh
-  $ COVERALLS_REPO_TOKEN=<your-coveralls-repo-token> cask exec ert-runner
-  ```
+- `UNDERCOVER_CI_TYPE`
+- `UNDERCOVER_CI_NAME`
+- `UNDERCOVER_COMMIT`
+- `UNDERCOVER_REF`
+- `UNDERCOVER_PULL_REQUEST`
+- `UNDERCOVER_BUILD_ID`
+- `UNDERCOVER_BUILD_NUMBER`
+- `UNDERCOVER_JOB_ID`
+- `UNDERCOVER_JOB_NUMBER`
+- `UNDERCOVER_JOB_NAME`
 
-  Consult the [Coveralls documentation](https://docs.coveralls.io/supported-ci-services) for details.
+See the documentation of `undercover--detect-ci` for a description of the semantics for these variables.
 
-  The token should not be made public, so it should be placed in the CI service's secrets store.
+----
 
-  Fields in the submitted Coveralls report may be overridden using standard environment variables:
+#### **(other CI) + [Coveralls](https://coveralls.io/)**
 
-  - `COVERALLS_SERVICE_NAME`
-  - `COVERALLS_REPO_TOKEN`
-  - `COVERALLS_SERVICE_NUMBER`
-  - `COVERALLS_SERVICE_JOB_ID`
-  - `COVERALLS_SERVICE_PULL_REQUEST`
-  - `COVERALLS_PARALLEL`
-  - `COVERALLS_FLAG_NAME`
-  - `COVERALLS_RUN_AT`
+For CI services which are not "magically" supported by Coveralls,
+you will need to set the `COVERALLS_REPO_TOKEN` environment variable
+before running tests, for example:
 
-  See the [Coveralls API reference](https://docs.coveralls.io/api-reference) for a description of these fields.
+```sh
+$ COVERALLS_REPO_TOKEN=<your-coveralls-repo-token> cask exec ert-runner
+```
 
-- **[GitHub Actions](https://github.com/features/actions) + [Codecov](https://about.codecov.io/) + [CodeCov GitHub Action](https://github.com/marketplace/actions/codecov)**
+Consult the [Coveralls documentation](https://docs.coveralls.io/supported-ci-services) for details.
 
-  Steps:
+The token should not be made public, so it should be placed in the CI service's secrets store.
 
-  1. Enable [the Codecov app](https://github.com/apps/codecov) for your account / organization / repository.
+Fields in the submitted Coveralls report may be overridden using standard environment variables:
 
-  2. Add [the Codecov GitHub action](https://github.com/marketplace/actions/codecov) to your GitHub Actions workflow YAML file,
-     after your test invocation.
+- `COVERALLS_SERVICE_NAME`
+- `COVERALLS_REPO_TOKEN`
+- `COVERALLS_SERVICE_NUMBER`
+- `COVERALLS_SERVICE_JOB_ID`
+- `COVERALLS_SERVICE_PULL_REQUEST`
+- `COVERALLS_PARALLEL`
+- `COVERALLS_FLAG_NAME`
+- `COVERALLS_RUN_AT`
 
-  3. Invoke `undercover` with `(:report-format 'codecov) (:send-report nil)`.
+See the [Coveralls API reference](https://docs.coveralls.io/api-reference) for a description of these fields.
 
-  A complete minimal example (using ert + Cask + ert-runner) can be found [here](https://github.com/undercover-el/undercover.el-github-codecov-integration-example).
+----
 
-- **(other CI) + [Codecov](https://codecov.io/)**
+#### **[GitHub Actions](https://github.com/features/actions) + [Codecov](https://about.codecov.io/) + [CodeCov GitHub Action](https://github.com/marketplace/actions/codecov)**
 
-  Codecov is supported in combination with their bash upload script.
+Steps:
 
-  In your test runner:
+1. Enable [the Codecov app](https://github.com/apps/codecov) for your account / organization / repository.
 
-  ```lisp
-  (undercover "*.el" (:report-format 'codecov)
-                     (:send-report nil))
-  ```
+2. Add [the Codecov GitHub action](https://github.com/marketplace/actions/codecov) to your GitHub Actions workflow YAML file,
+   after your test invocation.
 
-  And in your pipeline (`.travis.yml` or equivalent):
+3. Invoke `undercover` with `(:report-format 'codecov) (:send-report nil)`.
 
-  ``` yaml
-  after_success:
-    # Upload coverage
-    - bash <(curl -s https://codecov.io/bash)
-  ```
+A complete minimal example (using ert + Cask + ert-runner) can be found [here](https://github.com/undercover-el/undercover.el-github-codecov-integration-example).
+
+----
+
+#### **(other CI) + [Codecov](https://codecov.io/)**
+
+Codecov is supported in combination with their bash upload script.
+
+In your test runner:
+
+```lisp
+(undercover "*.el" (:report-format 'codecov)
+                   (:send-report nil))
+```
+
+And in your pipeline (`.travis.yml` or equivalent):
+
+``` yaml
+after_success:
+  # Upload coverage
+  - bash <(curl -s https://codecov.io/bash)
+```
 
 ### Local reports
 
