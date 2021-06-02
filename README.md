@@ -60,6 +60,50 @@ See [relevant documentation](https://github.com/doublep/eldev#undercover-plugin)
 
 ### Online services
 
+`undercover` supports a wide range of combinations of code forges / CI providers / report formats / upload methods.
+Some common combinations are documented below:
+
+<table>
+	<tr>
+		<th></th>
+		<th><img src="https://github.githubassets.com/favicons/favicon.svg" height="32"><br><a href="https://github.com/features/actions">GitHub Actions</a></th>
+		<th><img src="https://cdn.travis-ci.org/images/favicon-076a22660830dc325cc8ed70e7146a59.png" height="32"><br><a href="https://travis-ci.org/">Travis CI</a></th>
+		<th>(other CI)</th>
+	<tr>
+	<tr>
+		<th><img src="https://coveralls.io/apple-touch-icon-precomposed.png" height="32"><br><a href="https://coveralls.io/">Coveralls</a></th>
+		<td>
+			&bullet; <a href="#github-actions--coveralls--coveralls-github-action">With GitHub action</a><br>
+			&bullet; <a href="#github-actions--coveralls--undercoverel-built-in-uploader">With built-in uploader</a><br>
+		</td>
+		<td>
+			&bullet; <a href="#travis-ci--coveralls">With built-in uploader</a><br>
+		</td>
+		<td>
+			&bullet; <a href="#other-ci--coveralls">With built-in uploader</a><br>
+		</td>
+	</tr>
+	<tr>
+		<th><img src="https://about.codecov.io/wp-content/themes/codecov/assets/brand/icons/favicons/apple-icon-72x72.png" height="32"><br><a href="https://about.codecov.io/">Codecov</a></th>
+		<td>
+			&bullet; <a href="#github-actions--codecov--codecov-github-action">With GitHub action</a><br>
+			&bullet; <a href="#other-ci--codecov">With bash uploader</a><br>
+		</td>
+		<td colspan="2">
+			&bullet; <a href="#other-ci--codecov">With bash uploader</a><br>
+		</td>
+	</tr>
+	<tr>
+		<th>(other coverage service)</th>
+		<td colspan="2">
+			&bullet; <a href="#other-coverage-service">Manual configuration</a><br>
+		</td>
+		<td>
+			&bullet; <a href="#other-ci">Manual configuration</a><br>
+		</td>
+	</tr>
+</table>
+
 ----
 
 #### **[GitHub Actions](https://github.com/features/actions) + [Coveralls](https://coveralls.io/) + [Coveralls GitHub Action](https://github.com/marketplace/actions/coveralls-github-action)**
