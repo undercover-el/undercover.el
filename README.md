@@ -60,7 +60,20 @@ See [relevant documentation](https://github.com/doublep/eldev#undercover-plugin)
 
 ### Online services
 
-- **[GitHub Actions](https://github.com/features/actions) + [Coveralls](https://coveralls.io/)**
+- **[GitHub Actions](https://github.com/features/actions) + [Coveralls](https://coveralls.io/) + [Coveralls GitHub Action](https://github.com/marketplace/actions/coveralls-github-action)**
+
+  Steps:
+
+  1. Add [the Coveralls GitHub action](https://github.com/marketplace/actions/coveralls-github-action)
+     to your GitHub Actions workflow YAML file, after your test invocation.
+
+     To support matrix builds, add a final job with `parallel-finished: true`, as described in the action's documentation.
+
+  2. Invoke `undercover` with `(:report-format 'lcov) (:send-report nil)`.
+
+  A complete minimal example (using ert + Cask + ert-runner) can be found [here](https://github.com/undercover-el/undercover.el-github-coveralls-integration-example).
+
+- **[GitHub Actions](https://github.com/features/actions) + [Coveralls](https://coveralls.io/) + undercover.el built-in uploader**
 
   You will need to export the GitHub Actions access token into the environment.
 
