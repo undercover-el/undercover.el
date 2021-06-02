@@ -232,6 +232,16 @@ after_success:
   - bash <(curl -s https://codecov.io/bash)
 ```
 
+#### **(other coverage service)**
+
+If the coverage service supports coverage reports in the LCOV, SimpleCov, or Coveralls file format,
+it should be usable with `undercover` as follows:
+
+1. When calling `undercover`, set `:report-format` to an appropriate compatible format
+2. Set `:send-report nil`
+3. If necessary, set `:report-file` to the location where the report file should be saved
+4. Consult the coverage service's documentation on how to upload the report file to their service.
+
 ### Local reports
 
 #### Cask / Emacs Lisp
