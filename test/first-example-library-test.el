@@ -202,4 +202,28 @@ first-example-library : Percent 100% [Relevant: 10 Covered: 10 Missed: 0]
 first-example-library : Percent 100% [Relevant: 10 Covered: 10 Missed: 0]
 ")))))
 
+(ert-deftest test/3-verify/check-lcov-report-file ()
+  (let* ((undercover--files-coverage-statistics (make-hash-table :test 'equal))
+         (undercover--files (list (file-truename "test/first-example-library/first-example-library.el")))
+         (undercover--report-file-path "/tmp/undercover-lcov-report.info"))
+    (when (file-readable-p undercover--report-file-path)
+      (delete-file undercover--report-file-path))
+    (undercover-report 'lcov)
+    (let ((report (with-temp-buffer
+                    (insert-file-contents undercover--report-file-path)
+                    (buffer-substring-no-properties (point-min) (point-max)))))
+      (should (string-equal report (format "SF:%s
+DA:15,2
+DA:16,2
+DA:17,2
+DA:18,2
+DA:19,2
+DA:20,2
+DA:24,27
+DA:25,27
+DA:26,21
+DA:27,12
+end_of_record
+" (car undercover--files)))))))
+
 ;;; first-example-library-test.el ends here
