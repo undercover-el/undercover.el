@@ -154,11 +154,11 @@ LEVEL is ignored in this default implementation."
   (ignore level)
   (apply #'message (concat "UNDERCOVER: " format-string) args))
 
-(defun undercover--message (level format-string &rest args)
-  "Call `undercover-message-function'."
+(defmacro undercover--message (level format-string &rest args)
+  "Call `undercover-message-function', if the configured verbosity allows it."
   (declare (indent 1))
-  (when (<= level undercover--verbosity)
-    (apply undercover-message-function level format-string args)))
+  `(when (<= ,level undercover--verbosity)
+     (apply undercover-message-function ,level ,format-string (list ,@args))))
 
 
 ;; ----------------------------------------------------------------------------
