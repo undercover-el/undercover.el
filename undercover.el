@@ -936,6 +936,63 @@ These values may be overridden through the environment (see
 Please disable the :send-report option and use CodeCov's upload
 script (https://codecov.io/bash) instead"))))
 
+;; LCOV report:
+
+(defconst undercover-lcov--test-name nil
+  "The name of the test in the LCOV result set report (for the \"TN:\" line).
+
+If set to nil (the default), no \"TN:\" line will be generated.")
+
+(defun undercover-lcov--create-report ()
+  "Create LCOV test coverage report."
+  (when (and undercover--merge-report
+             (file-readable-p undercover--report-file-path))
+    (user-error "Merging of LCOV reports is not implemented. Please delete %s or invoke with (:merge-report nil)."
+                undercover--report-file-path))
+  (undercover--collect-files-coverage undercover--files)
+  (apply #'concat
+         ;; Test name
+         (if undercover-lcov--test-name
+             (concat "TN:" undercover-lcov--test-name "\n")
+           "")
+         ;; One section per file
+         (mapcar
+          (lambda (file)
+            (let ((statistics (gethash file undercover--files-coverage-statistics))
+                  line-numbers)
+              ;; Collect line numbers
+              (maphash (lambda (k v)
+                         (push k line-numbers))
+                       statistics)
+              ;; Emit coverage
+              (concat
+               ;; File name
+               "SF:" file "\n"
+               ;; Per-line coverage
+               (apply #'concat
+                      (mapcar
+                       (lambda (line)
+                         (format "DA:%d,%d\n"
+                                 line
+                                 (gethash line statistics)))
+                       (sort line-numbers #'<)))
+               "end_of_record\n")))
+          undercover--files)))
+
+(defun undercover-lcov--report ()
+  "Create test coverage report in LCOV format."
+  (when undercover--send-report
+    (error "UNDERCOVER: Cannot upload LCOV reports.
+
+Please disable the :send-report option (or specify a coverage
+provider as the :report-format instead of 'lcov)."))
+  (let ((undercover--report-file-path (or undercover--report-file-path
+                                          "coverage/lcov.info")))
+    (make-directory (or (file-name-directory undercover--report-file-path) "") t)
+    (with-temp-buffer
+      (insert (undercover-lcov--create-report))
+      (write-region nil nil undercover--report-file-path))))
+
 ;; SimpleCov report:
 
 (defconst undercover-simplecov--report-name "undercover.el"
@@ -1065,6 +1122,7 @@ script (https://codecov.io/bash) instead"))))
   (cl-case undercover--report-format
     ((nil)     (error "UNDERCOVER: Report format not configured and auto-detection failed"))
     (coveralls (undercover-coveralls--report))
+    (lcov      (undercover-lcov--report))
     (simplecov (undercover-simplecov--report))
     (codecov   (undercover-codecov--report))
     (text      (undercover-text--report))
@@ -1237,6 +1295,9 @@ nil          Detect an appropriate service automatically.
 
              Uploading from within Undercover is currently not
              supported, and will raise an error.
+
+'lcov        Save the coverage information in the format used by
+             GCOV / LCOV / geninfo.
 
 'simplecov   Save the coverage information as a SimpleCov
              .resultset.json file.
