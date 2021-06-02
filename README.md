@@ -186,9 +186,22 @@ See [relevant documentation](https://github.com/doublep/eldev#undercover-plugin)
 
   See the [Coveralls API reference](https://docs.coveralls.io/api-reference) for a description of these fields.
 
-- **[Codecov](https://codecov.io/)**
+- **[GitHub Actions](https://github.com/features/actions) + [Codecov](https://about.codecov.io/) + [CodeCov GitHub Action](https://github.com/marketplace/actions/codecov)**
 
-  CodeCov is supported in combination with their bash upload script.
+  Steps:
+
+  1. Enable [the Codecov app](https://github.com/apps/codecov) for your account / organization / repository.
+
+  2. Add [the Codecov GitHub action](https://github.com/marketplace/actions/codecov) to your GitHub Actions workflow YAML file,
+     after your test invocation.
+
+  3. Invoke `undercover` with `(:report-format 'codecov) (:send-report nil)`.
+
+  A complete minimal example (using ert + Cask + ert-runner) can be found [here](https://github.com/undercover-el/undercover.el-github-codecov-integration-example).
+
+- **(other CI) + [Codecov](https://codecov.io/)**
+
+  Codecov is supported in combination with their bash upload script.
 
   In your test runner:
 
