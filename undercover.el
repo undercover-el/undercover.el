@@ -961,7 +961,7 @@ If set to nil (the default), no \"TN:\" line will be generated.")
             (let ((statistics (gethash file undercover--files-coverage-statistics))
                   line-numbers)
               ;; Collect line numbers
-              (maphash (lambda (k v)
+              (maphash (lambda (k _v)
                          (push k line-numbers))
                        statistics)
               ;; Emit coverage
