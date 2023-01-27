@@ -56,6 +56,35 @@ See the [combined usage example](https://github.com/undercover-el/undercover.el-
 
 See [relevant documentation](https://github.com/doublep/eldev#undercover-plugin) on Eldev's own page for more information.
 
+### Eask
+> Eask is very similar to Cask; anything that applies to Cask will apply to Eask
+
+- Add `undercover.el` to your [Eask](https://github.com/emacs-eask/cli) file:
+
+  ```lisp
+  (package-file "awesome-package.el")
+
+  (source "gnu")
+  (source "melpa")
+
+  (development
+    (depends-on "undercover"))
+  ```
+
+- Before invoking `load` or `require` with your package in your test runner (`test/test-helper.el` / `features/support/env.el` / etc),
+  call `undercover` with wildcards that will match your package's source files:
+
+  ```lisp
+  (when (require 'undercover nil t)
+    (undercover "*.el" "awesome-extensions/*.el" (:exclude "awesome-examples.el")))
+
+  (require 'awesome-package)
+  ```
+
+- Add your repository to a coverage reporting service, such as [Coveralls](https://coveralls.io/) or [Codecov](https://codecov.io/).
+
+See [relevant documentation](https://emacs-eask.github.io/) on Eask's own page for more information.
+
 ## Configuration
 
 ### Online services
