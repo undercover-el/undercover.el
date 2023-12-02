@@ -7,7 +7,7 @@ A test coverage library for [Emacs Lisp](http://www.gnu.org/software/emacs/manua
 
 A few important notes about `undercover.el`:
 
-- it assumes a certain development cycle of your package (using either [Cask](https://github.com/cask/cask) or [Eldev](https://github.com/doublep/eldev));
+- it assumes a certain development cycle of your package (using either [Cask](https://github.com/cask/cask), [Eask](https://github.com/emacs-eask/cli) or [Eldev](https://github.com/doublep/eldev));
 - it doesn't support test coverage for byte-compiled files;
 - it is based on `edebug` and can have some issues with macro coverage;
 - it doesn't support [Circular Objects](http://www.gnu.org/software/emacs/manual/html_node/elisp/Circular-Objects.html).
@@ -317,7 +317,7 @@ it should be usable with `undercover` as follows:
 
 ### Local reports
 
-#### Cask / Emacs Lisp
+#### Cask / Eask / Emacs Lisp
 
 - Set the `report-file` option to change the report file location:
 
